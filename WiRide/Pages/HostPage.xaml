@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="WiRide.Pages.HostPage"
+             BackgroundColor="#6C6C70"
+             NavigationPage.HasNavigationBar="False">
+
+    <Grid RowDefinitions="Auto,*,Auto" Padding="20">
+        
+        <!-- Settings Icon -->
+        <ImageButton Grid.Row="0"
+                    Source="settings_icon.png"
+                    WidthRequest="40"
+                    HeightRequest="40"
+                    HorizontalOptions="End"
+                    VerticalOptions="Start"
+                    BackgroundColor="Transparent"
+                    Clicked="OnSettingsClicked"
+                    Margin="0,20,0,0"/>
+
+        <!-- Main Content -->
+        <VerticalStackLayout Grid.Row="1" 
+                            Spacing="40" 
+                            VerticalOptions="Center">
+            
+            <!-- Status Label -->
+            <Label x:Name="StatusLabel"
+                   Text="You are Host"
+                   FontSize="32"
+                   FontAttributes="Bold"
+                   TextColor="#FFD60A"
+                   HorizontalOptions="Center"/>
+
+            <!-- Connected Clients List -->
+            <VerticalStackLayout x:Name="ClientsListContainer" 
+                                Spacing="10"
+                                IsVisible="False">
+                <Label Text="Connected Riders:"
+                       FontSize="16"
+                       TextColor="White"
+                       HorizontalOptions="Center"/>
+                <CollectionView x:Name="ClientsListView"
+                               HeightRequest="100">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Label Text="{Binding ClientName}"
+                                   FontSize="14"
+                                   TextColor="#30D158"
+                                   HorizontalOptions="Center"
+                                   Margin="0,5"/>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </VerticalStackLayout>
+
+            <!-- Mute Button -->
+            <Border BackgroundColor="White"
+                    StrokeThickness="0"
+                    WidthRequest="100"
+                    HeightRequest="100"
+                    HorizontalOptions="Center">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="20"/>
+                </Border.StrokeShape>
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnMuteToggled"/>
+                </Border.GestureRecognizers>
+                
+                <Label x:Name="MuteIcon"
+                       Text="🎤"
+                       FontSize="50"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center"/>
+            </Border>
+
+            <!-- Volume Slider -->
+            <VerticalStackLayout Spacing="10">
+                <Label Text="Volume"
+                       FontSize="14"
+                       TextColor="White"
+                       HorizontalOptions="Center"/>
+                <Slider x:Name="VolumeSlider"
+                       Minimum="0"
+                       Maximum="100"
+                       Value="80"
+                       MinimumTrackColor="#FFD60A"
+                       MaximumTrackColor="#3A3A3C"
+                       ThumbColor="White"
+                       WidthRequest="300"
+                       ValueChanged="OnVolumeChanged"/>
+            </VerticalStackLayout>
+        </VerticalStackLayout>
+
+        <!-- Network Info -->
+        <VerticalStackLayout Grid.Row="2" Spacing="5" Margin="0,0,0,20">
+            <Label x:Name="NetworkStatusLabel"
+                   Text="Wi-Fi Hotspot: Starting..."
+                   FontSize="12"
+                   TextColor="White"
+                   HorizontalOptions="Center"/>
+            <Label x:Name="NetworkNameLabel"
+                   Text="Network: -"
+                   FontSize="12"
+                   TextColor="#8E8E93"
+                   HorizontalOptions="Center"/>
+            <Button x:Name="StopHostButton"
+                   Text="Stop Hosting"
+                   BackgroundColor="#FF3B30"
+                   TextColor="White"
+                   CornerRadius="10"
+                   Padding="20,10"
+                   Clicked="OnStopHostClicked"
+                   HorizontalOptions="Center"/>
+        </VerticalStackLayout>
+    </Grid>
+
+</ContentPage>

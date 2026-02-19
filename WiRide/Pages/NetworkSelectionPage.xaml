@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="WiRide.Pages.NetworkSelectionPage"
+             BackgroundColor="#2C2C2E"
+             Title="Select Network">
+
+    <Grid RowDefinitions="Auto,*,Auto" Padding="20">
+        
+        <!-- Header -->
+        <VerticalStackLayout Grid.Row="0" Spacing="10" Margin="0,20,0,20">
+            <Label Text="Available Networks"
+                   FontSize="24"
+                   FontAttributes="Bold"
+                   TextColor="White"
+                   HorizontalOptions="Center"/>
+            <Label Text="Select a WiRide network to connect"
+                   FontSize="14"
+                   TextColor="#8E8E93"
+                   HorizontalOptions="Center"/>
+        </VerticalStackLayout>
+
+        <!-- Networks List -->
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Spacing="10">
+                <CollectionView x:Name="NetworksListView"
+                               SelectionMode="None">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Border BackgroundColor="#3A3A3C"
+                                   StrokeThickness="0"
+                                   Margin="0,5"
+                                   Padding="0">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="15"/>
+                                </Border.StrokeShape>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnNetworkSelected" 
+                                                         CommandParameter="{Binding .}"/>
+                                </Border.GestureRecognizers>
+                                
+                                <Grid ColumnDefinitions="*,Auto" Padding="20,15">
+                                    <Label Grid.Column="0"
+                                           Text="{Binding}"
+                                           FontSize="16"
+                                           TextColor="White"
+                                           VerticalOptions="Center"/>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+                <!-- No Networks Found -->
+                <Label x:Name="NoNetworksLabel"
+                       Text="No WiRide networks found"
+                       FontSize="14"
+                       TextColor="#8E8E93"
+                       HorizontalOptions="Center"
+                       Margin="0,40"
+                       IsVisible="False"/>
+                
+                <!-- Loading Indicator -->
+                <ActivityIndicator x:Name="LoadingIndicator"
+                                  IsRunning="False"
+                                  IsVisible="False"
+                                  Color="#30D158"
+                                  HeightRequest="40"
+                                  Margin="0,40"/>
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Bottom Buttons -->
+        <VerticalStackLayout Grid.Row="2" Spacing="10" Margin="0,20,0,20">
+            <Button x:Name="RefreshButton"
+                   Text="Refresh"
+                   BackgroundColor="#007AFF"
+                   TextColor="White"
+                   CornerRadius="10"
+                   Padding="20,12"
+                   FontSize="16"
+                   FontAttributes="Bold"
+                   Clicked="OnRefreshClicked"
+                   HorizontalOptions="Fill"/>
+            
+            <Button Text="Cancel"
+                   BackgroundColor="#48484A"
+                   TextColor="White"
+                   CornerRadius="10"
+                   Padding="20,12"
+                   FontSize="14"
+                   Clicked="OnCancelClicked"
+                   HorizontalOptions="Fill"/>
+        </VerticalStackLayout>
+    </Grid>
+
+</ContentPage>
+
