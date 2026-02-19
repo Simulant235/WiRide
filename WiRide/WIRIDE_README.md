@@ -53,13 +53,8 @@ WiRide/
 
 ### ✅ Implementiert
 - Host/Client Architektur
-- Wi-Fi Soft-AP (Host)
-- Audio Capture & Playback
-- UDP-basiertes Audio-Streaming
-- Mix-Minus Audio-Mixing
 - Mute-Funktion
 - Volume-Kontrolle
-- Client-Erkennung
 
 ### 🚧 In Entwicklung
 - Opus Audio-Codec (derzeit PCM)
@@ -67,6 +62,10 @@ WiRide/
 - Automatische Reconnection
 - Latenz-Monitoring
 - Einstellungen-Seite
+- Mix-Minus Audio-Mixing
+- Audio Capture & Playback
+- UDP-basiertes Audio-Streaming
+- Wi-Fi Soft-AP (Host)
 
 ## 📱 Anforderungen
 
