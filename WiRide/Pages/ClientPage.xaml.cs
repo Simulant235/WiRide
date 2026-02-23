@@ -101,11 +101,6 @@ public partial class ClientPage : ContentPage
         MuteIcon.Text = _isMuted ? "🎤" : "🔇";
     }
 
-    private void OnVolumeChanged(object? sender, ValueChangedEventArgs e)
-    {
-        // Lautstaerke-Funktionalitaet kommt in spaeteren MVPs
-    }
-
     private void OnSettingsClicked(object? sender, EventArgs e)
     {
         DisplayAlert("Einstellungen", "Einstellungen kommen in spaeteren MVPs", "OK");

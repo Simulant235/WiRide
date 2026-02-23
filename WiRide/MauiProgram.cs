@@ -27,6 +27,11 @@ namespace WiRide
             builder.Services.AddTransient<ClientPage>();
             builder.Services.AddTransient<NetworkSelectionPage>();
 
+            // Test-Seiten (nur DEBUG)
+#if DEBUG
+            builder.Services.AddTransient<AudioTestPage>();
+#endif
+
             // Services registrieren
 #if ANDROID
             builder.Services.AddSingleton<IAudioService, AndroidAudioService>();

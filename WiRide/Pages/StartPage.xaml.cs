@@ -5,6 +5,10 @@ public partial class StartPage : ContentPage
     public StartPage()
     {
         InitializeComponent();
+
+#if DEBUG
+        AudioTestButton.IsVisible = true;
+#endif
     }
 
     private async void OnHostButtonClicked(object? sender, EventArgs e)
@@ -15,5 +19,10 @@ public partial class StartPage : ContentPage
     private async void OnClientButtonClicked(object? sender, EventArgs e)
     {
         await Navigation.PushAsync(new ClientPage());
+    }
+
+    private async void OnAudioTestButtonClicked(object? sender, EventArgs e)
+    {
+        await Navigation.PushAsync(new AudioTestPage());
     }
 }

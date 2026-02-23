@@ -7,7 +7,6 @@
 
     <Grid RowDefinitions="Auto,*,Auto" Padding="20">
         
-        <!-- Settings Icon -->
         <ImageButton Grid.Row="0"
                     Source="settings_icon.png"
                     WidthRequest="40"
@@ -18,12 +17,10 @@
                     Clicked="OnSettingsClicked"
                     Margin="0,20,0,0"/>
 
-        <!-- Main Content -->
-        <VerticalStackLayout Grid.Row="1" 
+        <VerticalStackLayout Grid.Row="1"
                             Spacing="40" 
                             VerticalOptions="Center">
             
-            <!-- Status Label -->
             <Label x:Name="StatusLabel"
                    Text="You are Host"
                    FontSize="32"
@@ -31,8 +28,7 @@
                    TextColor="#FFD60A"
                    HorizontalOptions="Center"/>
 
-            <!-- Connected Clients List -->
-            <VerticalStackLayout x:Name="ClientsListContainer" 
+            <VerticalStackLayout x:Name="ClientsListContainer"
                                 Spacing="10"
                                 IsVisible="False">
                 <Label Text="Connected Riders:"
@@ -53,7 +49,6 @@
                 </CollectionView>
             </VerticalStackLayout>
 
-            <!-- Mute Button -->
             <Border BackgroundColor="White"
                     StrokeThickness="0"
                     WidthRequest="100"
@@ -72,26 +67,8 @@
                        HorizontalOptions="Center"
                        VerticalOptions="Center"/>
             </Border>
-
-            <!-- Volume Slider -->
-            <VerticalStackLayout Spacing="10">
-                <Label Text="Volume"
-                       FontSize="14"
-                       TextColor="White"
-                       HorizontalOptions="Center"/>
-                <Slider x:Name="VolumeSlider"
-                       Minimum="0"
-                       Maximum="100"
-                       Value="80"
-                       MinimumTrackColor="#FFD60A"
-                       MaximumTrackColor="#3A3A3C"
-                       ThumbColor="White"
-                       WidthRequest="300"
-                       ValueChanged="OnVolumeChanged"/>
-            </VerticalStackLayout>
         </VerticalStackLayout>
 
-        <!-- Network Info -->
         <VerticalStackLayout Grid.Row="2" Spacing="5" Margin="0,0,0,20">
             <Label x:Name="NetworkStatusLabel"
                    Text="Wi-Fi Hotspot: Starting..."
