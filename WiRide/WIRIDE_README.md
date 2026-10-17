@@ -1,170 +1,165 @@
 # WiRide - Offline Motorcycle Intercom App
 
-**MVP Version 1.0**
+Version 0.8.1 · .NET MAUI 10 · Android
 
 ## 🎯 Überblick
 
-WiRide ist eine Offline-Intercom-App für Motorradfahrer, die es mehreren Fahrern ermöglicht, über Wi-Fi Direct miteinander zu kommunizieren - **ohne Internetverbindung**.
+WiRide ist ein Intercom für Motorradgruppen ohne Internet und ohne Mobilfunk. Ein Handy ist **Host** (stellt das WLAN bereit und mischt das Audio), alle anderen sind **Clients**. Jeder hört alle anderen, aber nicht sich selbst (Mix-Minus).
 
 ## 🏗️ Architektur
 
+```
+Client-Mikrofon ──Opus/UDP──►  Host  ──Opus/UDP──► Client-Lautsprecher
+                               │  Mix-Minus alle 20 ms:
+                               │  Summe aller Stimmen minus eigene Stimme
+Host-Mikrofon ────────────────►│──────────────────► Host-Lautsprecher
+```
+
 ### Host-Modus
-- Erstellt Wi-Fi Soft-AP (Access Point)
-- Empfängt Audio von allen Clients
-- Mischt Audio-Streams mit **Mix-Minus** (jeder hört nur die anderen, nicht sich selbst)
-- Verteilt gemischtes Audio an alle Clients
+- Startet einen WLAN-Hotspot (LocalOnlyHotspot, SSID/Passwort werden angezeigt) oder nutzt einen manuellen Hotspot / ein bestehendes WLAN
+- Lauscht auf UDP-Port 8888 (einstellbar), beantwortet Host-Suchen per Broadcast
+- Mischt alle 20 ms einen Frame pro Teilnehmer (Jitter-Buffer 80 ms) und schickt jedem seinen eigenen Mix
+- Entfernt Clients nach 5 s ohne Lebenszeichen
 
 ### Client-Modus
-- Verbindet sich mit Host-Wi-Fi
-- Sendet Mikrofon-Audio an Host
-- Empfängt und spielt gemischtes Audio ab
+- Sucht den Host im aktuellen WLAN (Broadcast + Gateway-IP)
+- Falls keiner gefunden: WiRide-WLAN aus Scan wählen oder Host-IP manuell eingeben
+- Sendet Mikrofon-Frames, spielt den Mix ab (Puffer max. 100 ms)
+- KeepAlive-Ping jede Sekunde mit Latenzanzeige, automatischer Reconnect bei Abbruch
 
 ## 📂 Projektstruktur
 
 ```
 WiRide/
 ├── Models/
-│   ├── AudioPacket.cs          # Audio-Daten-Paket
-│   ├── NetworkMessage.cs       # Netzwerk-Nachricht
-│   └── ClientInfo.cs           # Client-Informationen
+│   ├── NetworkMessage.cs        # Binäres UDP-Protokoll (Discover, Join, Audio, Ping/Pong ...)
+│   ├── AudioPacket.cs           # Empfangenes Audio inkl. Codec
+│   └── ClientInfo.cs            # Client-Infos + DiscoveredHost
 ├── Services/
-│   ├── IAudioService.cs        # Audio-Interface
-│   ├── INetworkService.cs      # Netzwerk-Interface
-│   ├── IWiFiService.cs         # Wi-Fi-Interface
-│   └── AudioMixerService.cs    # Audio-Mixing-Logik
+│   ├── IntercomService.cs       # Verbindet Audio, Netzwerk, Mixer, Codec (Host/Client-Sitzung)
+│   ├── UdpNetworkService.cs     # Plattformunabhängiger UDP-Service
+│   ├── AudioMixerService.cs     # Mix-Minus für PCM 16-bit
+│   ├── AudioCodecService.cs     # Opus-Kompression (Concentus)
+│   ├── AppSettings.cs           # Persistente Einstellungen
+│   ├── PermissionHelper.cs      # Laufzeit-Berechtigungen
+│   ├── ServiceHelper.cs         # DI-Zugriff aus Pages
+│   └── I*Service.cs             # Interfaces
 ├── Pages/
-│   ├── StartPage.xaml          # Start (Host/Client Auswahl)
-│   ├── HostPage.xaml           # Host-Ansicht
-│   └── ClientPage.xaml         # Client-Ansicht
+│   ├── StartPage                # Host/Client-Auswahl
+│   ├── HostPage                 # Host-Ansicht mit Rider-Liste und Latenzen
+│   ├── ClientPage               # Client-Ansicht mit Verbindungsstatus und Latenz
+│   ├── NetworkSelectionPage     # WLAN-Auswahl
+│   ├── SettingsPage             # Einstellungen
+│   └── AudioTestPage            # Nur DEBUG: lokaler Audio-Test
 └── Platforms/Android/Services/
-    ├── AndroidAudioService.cs  # Android Audio-Implementierung
-    ├── AndroidWiFiService.cs   # Android Wi-Fi-Implementierung
-    └── AndroidNetworkService.cs # Android Netzwerk-Implementierung
+    ├── AndroidAudioService.cs           # AudioRecord/AudioTrack (VoiceCommunication)
+    ├── AndroidWiFiService.cs            # Hotspot, Scan, WLAN-Verbindung
+    └── IntercomForegroundService.cs     # Hintergrundbetrieb
 ```
 
 ## 🔧 Technologien
 
-- **.NET MAUI 10** - Cross-Platform UI Framework
-- **Android AudioRecord/AudioTrack** - Audio Capture & Playback
-- **UDP Sockets** - Low-Latency Audio-Streaming
-- **Wi-Fi Direct / Soft-AP** - Offline-Verbindung
+- .NET MAUI 10, C#
+- `System.Net.Sockets.UdpClient` mit eigenem Binärprotokoll (20 Byte Header)
+- Android `AudioRecord` / `AudioTrack` (Echo-Unterdrückung über VoiceCommunication)
+- [Concentus](https://github.com/lostromb/concentus) (Opus in reinem C#)
+- Android `LocalOnlyHotspot`, `WifiNetworkSpecifier`, Foreground-Service
 
 ## ⚙️ Features
 
-### ✅ Implementiert
-- Host/Client Architektur
-- Mute-Funktion
-- Volume-Kontrolle
-
-### 🚧 In Entwicklung
-- Opus Audio-Codec (derzeit PCM)
-- Verbesserte Hotspot-Verwaltung (Android 13+)
-- Automatische Reconnection
-- Latenz-Monitoring
-- Einstellungen-Seite
-- Mix-Minus Audio-Mixing
-- Audio Capture & Playback
-- UDP-basiertes Audio-Streaming
-- Wi-Fi Soft-AP (Host)
+- ✅ Host/Client-Intercom über WLAN (UDP)
+- ✅ Mix-Minus (niemand hört sich selbst)
+- ✅ Opus-Kompression (~45 statt 640 Byte pro 20 ms), abschaltbar
+- ✅ Hotspot per App, Fallback auf manuellen Hotspot oder bestehendes WLAN
+- ✅ Automatische Host-Suche, manuelle IP als Fallback
+- ✅ WLAN-Scan und Verbindung aus der App
+- ✅ Latenzanzeige (Client und pro Rider beim Host)
+- ✅ Auto-Reconnect und Client-Timeout
+- ✅ Mute (echter Mikrofon-Mute)
+- ✅ Einstellungen: Name, Lautstärke, Auto-Reconnect, Opus, Port, Sample-Rate
+- ✅ Hintergrundbetrieb bei gesperrtem Bildschirm
 
 ## 📱 Anforderungen
 
 ### Hardware
-- Android-Smartphone mit:
-  - Wi-Fi Direct / Hotspot-Unterstützung
-  - Mikrofon
-  - Lautsprecher / Kopfhörer
-- Mindestens Android 5.0 (API 21)
+- Android 8.0+ für den App-Hotspot (ältere Geräte: manueller Hotspot)
+- Android 10+ empfohlen für WLAN-Verbindung aus der App
+- Bluetooth-Headset im Helm (Audio läuft über das Standard-Audiogerät)
 
-### Permissions
-Die App benötigt folgende Berechtigungen:
-- `RECORD_AUDIO` - Mikrofon-Zugriff
-- `ACCESS_WIFI_STATE` - Wi-Fi-Status
-- `CHANGE_WIFI_STATE` - Wi-Fi aktivieren/deaktivieren
-- `ACCESS_FINE_LOCATION` - Wi-Fi-Scanning (Android 6+)
-- `NEARBY_WIFI_DEVICES` - Hotspot (Android 13+)
+### Berechtigungen
+- Mikrofon (`RECORD_AUDIO`)
+- Standort (`ACCESS_FINE_LOCATION`, für WLAN-Scan und Hotspot; Standort muss eingeschaltet sein)
+- Geräte in der Nähe (`NEARBY_WIFI_DEVICES`, Android 13+)
+- Benachrichtigungen (`POST_NOTIFICATIONS`, Android 13+, für den Hintergrundbetrieb)
+- WLAN/Netzwerk, Multicast, Foreground-Service, WakeLock
 
 ## 🚀 Installation & Ausführung
 
 ### Voraussetzungen
-- Visual Studio 2022 (17.13+) mit .NET 10 SDK
-- Android SDK
-- Android Emulator oder physisches Gerät
+- Visual Studio 2026 mit .NET MAUI Workload
+- .NET 10 SDK, Android SDK
 
 ### Build & Run
 ```bash
-# Restore Dependencies
-dotnet restore
-
-# Build
-dotnet build
-
-# Run auf Android
-dotnet build -t:Run -f net10.0-android
+dotnet build WiRide/WiRide.csproj -f net10.0-android
 ```
+In Visual Studio: Android-Gerät auswählen und starten.
+
+> Hinweis: Die `nuget.config` im Repo ergänzt das globale Package-Source-Mapping um `Concentus`.
 
 ## 📖 Verwendung
 
-### Als Host:
-1. App starten
-2. "Start as Host" wählen
-3. Wi-Fi Hotspot wird automatisch erstellt
-4. Netzwerk-Name und Passwort notieren
-5. Auf Clients warten
+### Als Host
+1. **Host** wählen, Berechtigungen erlauben
+2. **WiRide-Hotspot starten** (oder manuellen Hotspot / aktuelles WLAN)
+3. WLAN-Name, Passwort und IP werden unten angezeigt
+4. Verbundene Rider erscheinen mit ihrer Latenz
 
-### Als Client:
-1. App starten
-2. "Join as Client" wählen
-3. "Scan for Networks" drücken
-4. WiRide-Netzwerk auswählen
-5. Mit Host verbinden
+### Als Client
+1. **Client** wählen, **Connect to Network** tippen
+2. Ist das Handy schon im WLAN des Hosts, wird er automatisch gefunden
+3. Sonst **WiRide-WLAN wählen** (Passwort vom Host eingeben) oder **Host-IP manuell eingeben**
 
-### Während des Gesprächs:
-- **Mute-Button** (Mikrofon-Icon): Stummschaltung ein/aus
-- **Volume-Slider**: Lautstärke anpassen
-- **Settings** (Zahnrad): Einstellungen (coming soon)
+### Während der Fahrt
+- Mikrofon-Kachel tippen = Mute (🎤 ↔ 🔇)
+- Bildschirm kann gesperrt werden, die Benachrichtigung zeigt die aktive Sitzung
+- Bei Verbindungsabbruch verbindet der Client automatisch neu
 
 ## 🎵 Audio-Spezifikationen
 
-- **Sample Rate**: 16 kHz
-- **Format**: PCM 16-bit
-- **Channels**: Mono
-- **Buffer Size**: 1024 bytes
-- **Latency Target**: < 150 ms Round-Trip
+| Parameter | Wert |
+|---|---|
+| Sample-Rate | 16 kHz (einstellbar: 8/16/24/48 kHz, auf allen Geräten gleich) |
+| Format | PCM 16-bit Mono |
+| Frame | 20 ms (320 Samples bei 16 kHz) |
+| Codec | Opus VoIP, 24 kbit/s (oder unkomprimiert PCM) |
+| Jitter-Buffer Host | max. 4 Frames (80 ms) |
+| Abspiel-Puffer | max. 5 Frames (100 ms) |
 
 ## 🔒 Sicherheit & Datenschutz
 
-- **Vollständig offline** - keine Daten verlassen das lokale Netzwerk
-- **Kein Cloud-Service** - alle Daten bleiben auf den Geräten
-- **Temporäre Daten** - Audio wird nicht gespeichert
-- **Wi-Fi Passwort**: Standardmässig "WiRide123" (sollte geändert werden)
+- Kein Internet, keine Server, keine Aufzeichnung
+- Audio bleibt im lokalen WLAN; der Hotspot ist WPA2-geschützt
+- Die Audio-Pakete selbst sind nicht verschlüsselt (im WLAN mitlesbar, wer das Passwort kennt)
 
 ## 🐛 Bekannte Einschränkungen
 
-1. **Android Hotspot**: Programmatisches Starten erfordert Systemberechtigungen (Android 8.0+)
-   - Workaround: Hotspot manuell aktivieren
-2. **Audio-Codec**: Derzeit PCM (unkomprimiert)
-   - Geplant: Opus für bessere Kompression
-3. **Reichweite**: Wi-Fi-abhängig (typisch 20-80m)
-4. **Gleichzeitigkeit**: Performance hängt von Host-Gerät ab
+- Nur Android; iOS/Windows nutzen Platzhalter für Audio und WLAN (iOS erlaubt keinen App-Hotspot, der Build braucht einen Mac)
+- LocalOnlyHotspot: SSID und Passwort vergibt Android zufällig (nicht konfigurierbar)
+- WLAN-Scan ist von Android gedrosselt (4 Scans / 2 Minuten)
+- Port und Sample-Rate müssen auf allen Geräten gleich sein
+- Reichweite hängt vom WLAN ab (typisch 30–100 m)
 
 ## 🛠️ Entwicklung
 
-### Service-Pattern
-Alle plattformspezifischen Funktionen sind über Interfaces abstrahiert:
-- `IAudioService` - Audio-Handling
-- `IWiFiService` - Wi-Fi-Management
-- `INetworkService` - Netzwerk-Kommunikation
+### Versionierung
+`vX.Y.Z - Titel` pro Commit, Feature-Branches werden mit `--no-ff` in `master` gemergt.
+- **X**: 1 sobald alle Grundfunktionen fertig nutzbar sind (sonst 0)
+- **Y**: neues Feature
+- **Z**: Patch
 
-### Audio-Mixing (Mix-Minus)
-```csharp
-// Für Client A: Mix von B + C (ohne A)
-Audio_to_A = MixAudio(B.audio + C.audio) - A.audio
+Siehe [ROADMAP.md](../ROADMAP.md) für Changelog und offene Punkte.
 
-// Für Client B: Mix von A + C (ohne B)
-Audio_to_B = MixAudio(A.audio + C.audio) - B.audio
-```
-
----
-
-**Made with ❤️ for Motorcycle Riders**
+### Protokoll
+Jedes UDP-Paket: `'W' 'R' Version Typ SenderId(16)` + Nutzdaten.
+`Audio`: Sequenz (int32), Codec (byte), Audiodaten. `Ping/Pong`: Zeitstempel (int64), Latenz (int32).
