@@ -36,15 +36,15 @@ namespace WiRide
 #if ANDROID
             builder.Services.AddSingleton<IAudioService, AndroidAudioService>();
             builder.Services.AddSingleton<IWiFiService, AndroidWiFiService>();
-            builder.Services.AddSingleton<INetworkService, AndroidNetworkService>();
 #else
             // Platzhalter-Services fuer andere Plattformen
             builder.Services.AddSingleton<IAudioService, MockAudioService>();
             builder.Services.AddSingleton<IWiFiService, MockWiFiService>();
-            builder.Services.AddSingleton<INetworkService, MockNetworkService>();
 #endif
 
+            builder.Services.AddSingleton<INetworkService, UdpNetworkService>();
             builder.Services.AddSingleton<AudioMixerService>();
+            builder.Services.AddSingleton<IntercomService>();
 
 #if DEBUG
             builder.Logging.AddDebug();
@@ -62,6 +62,7 @@ namespace WiRide
         public float Volume { get; set; }
         public bool IsRecording => false;
         public bool IsPlaying => false;
+        public int MaxQueuedChunks { get; set; }
         public Task StartRecordingAsync() => Task.CompletedTask;
         public Task StopRecordingAsync() => Task.CompletedTask;
         public Task StartPlaybackAsync() => Task.CompletedTask;
@@ -79,22 +80,5 @@ namespace WiRide
         public Task<bool> ConnectToNetworkAsync(string ssid, string password) => Task.FromResult(true);
         public Task<bool> DisconnectFromNetworkAsync() => Task.FromResult(true);
         public Task<List<string>> ScanNetworksAsync() => Task.FromResult(new List<string> { "WiRide_Test1", "WiRide_Test2" });
-    }
-
-    public class MockNetworkService : INetworkService
-    {
-        public event EventHandler<Models.AudioPacket>? AudioPacketReceived;
-        public event EventHandler<Models.ClientInfo>? ClientConnected;
-        public event EventHandler<string>? ClientDisconnected;
-        public event EventHandler<string>? HostFound;
-        public bool IsHost => false;
-        public bool IsConnected => false;
-        public string? HostIp => null;
-        public List<Models.ClientInfo> ConnectedClients => new();
-        public Task StartHostAsync(int port = 8888) => Task.CompletedTask;
-        public Task StopHostAsync() => Task.CompletedTask;
-        public Task ConnectToHostAsync(string hostIp, int port = 8888) => Task.CompletedTask;
-        public Task DisconnectAsync() => Task.CompletedTask;
-        public Task SendAudioAsync(byte[] audioData, string clientId) => Task.CompletedTask;
     }
 }

@@ -13,11 +13,11 @@ public class AndroidAudioService : IAudioService
     private bool _isMuted = false;
     private float _volume = 0.8f;
 
-    private const int SampleRate = 16000;
+    private int SampleRate = AppSettings.DefaultSampleRate;
     private const ChannelIn RecordChannelConfig = ChannelIn.Mono;
     private const ChannelOut PlayChannelConfig = ChannelOut.Mono;
     private const Encoding AudioFormat = Encoding.Pcm16bit;
-    private const int BufferSize = 1024;
+    private int BufferSize => SampleRate * AppSettings.FrameDurationMs / 1000 * 2;
 
     private readonly ConcurrentQueue<byte[]> _playbackQueue = new();
     private CancellationTokenSource? _recordCts;
@@ -43,6 +43,7 @@ public class AndroidAudioService : IAudioService
 
     public bool IsRecording => _isRecording;
     public bool IsPlaying => _isPlaying;
+    public int MaxQueuedChunks { get; set; } = 3000; // 60 s, Intercom setzt kleiner
 
     public Task StartRecordingAsync()
     {
@@ -51,6 +52,7 @@ public class AndroidAudioService : IAudioService
 
         try
         {
+            SampleRate = AppSettings.SampleRate;
             int minBufferSize = AudioRecord.GetMinBufferSize(SampleRate, RecordChannelConfig, AudioFormat);
             _audioRecord = new AudioRecord(
                 AudioSource.VoiceCommunication,
@@ -94,8 +96,10 @@ public class AndroidAudioService : IAudioService
                     Buffer.BlockCopy(buffer, 0, audioData, 0, bytesRead);
                     AudioDataCaptured?.Invoke(this, audioData);
                 }
-
-                await Task.Delay(10, cancellationToken);
+                else if (bytesRead <= 0)
+                {
+                    await Task.Delay(5, cancellationToken);
+                }
             }
             catch (OperationCanceledException)
             {
@@ -136,6 +140,7 @@ public class AndroidAudioService : IAudioService
         {
             System.Diagnostics.Debug.WriteLine("StartPlaybackAsync: Starte...");
 
+            SampleRate = AppSettings.SampleRate;
             int minBufferSize = AudioTrack.GetMinBufferSize(SampleRate, PlayChannelConfig, AudioFormat);
 
             _audioTrack = new AudioTrack.Builder()
@@ -225,31 +230,11 @@ public class AndroidAudioService : IAudioService
         {
             _playbackQueue.Enqueue(audioData);
 
-            // Queue-Limit auf 1 Million Chunks (~1 GB RAM)
-            // 
-            // Warum? Bei lokalem Test kein Problem, aber beim Netzwerk-Streaming
-            // kommen die Chunks unregelmaessig an (WiFi-Bursts, Delays, usw...).
-            // Ohne Limit koennte die Queue endlos wachsen wenn mehr reinkommt
-            // als abgespielt wird -> irgendwann RAM voll = Katastrophe.
-            //
-            // Das ist viel, aber moderne Handys haben 8-12 GB RAM und der Host
-            // sollte eh ein starkes Geraet sein. Wenn die Queue 1 GB erreicht haben
-            // wir sowieso groessere Probleme (Netzwerk komplett verloren oder
-            // 50 Clients gleichzeitig verbunden). In der Praxis wird die Queue
-            // bei normalem Betrieb eh nur bei ein paar hundert Chunks liegen.
-
-            int maxQueueSize = 1_000_000; // 1 Million Chunks = ~1 GB
-
-            if (_playbackQueue.Count > maxQueueSize)
+            // Queue begrenzen: beim Netzwerk-Streaming kommen Chunks unregelmaessig an
+            // (WiFi-Bursts). Zu viele gepufferte Chunks = hohe Latenz, also aelteste verwerfen.
+            while (_playbackQueue.Count > MaxQueuedChunks)
             {
                 _playbackQueue.TryDequeue(out _);
-                System.Diagnostics.Debug.WriteLine($"Queue overflow! Chunk verworfen (limit: {maxQueueSize})");
-            }
-
-            // Debug-Output nur alle 1000 Chunks oder wenn Queue kritisch wird
-            if (_playbackQueue.Count > 10000 || _playbackQueue.Count % 1000 == 0)
-            {
-                System.Diagnostics.Debug.WriteLine($"Audio Queue: {_playbackQueue.Count} chunks ({_playbackQueue.Count / 1000} MB)");
             }
         }
         else

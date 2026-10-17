@@ -1,105 +1,75 @@
 using WiRide.Services;
-using WiRide.Models;
 
 namespace WiRide.Pages;
 
 public partial class HostPage : ContentPage
 {
-    // Services - Kommt in spaeteren MVPs
-    private readonly IWiFiService? _wifiService;
-    private readonly INetworkService? _networkService;
-    private readonly IAudioService? _audioService;
-    private readonly AudioMixerService _mixerService;
-
-    private bool _isMuted = true;
-    private bool _isHosting = false;
-    private string _deviceId = Guid.NewGuid().ToString();
+    private readonly IntercomService _intercom;
+    private IDispatcherTimer? _refreshTimer;
 
     public HostPage()
     {
         InitializeComponent();
 
-        // Service-Initialisierung - Kommt in spaeteren MVPs
-        _wifiService = Handler?.MauiContext?.Services.GetService<IWiFiService>();
-        _networkService = Handler?.MauiContext?.Services.GetService<INetworkService>();
-        _audioService = Handler?.MauiContext?.Services.GetService<IAudioService>();
-        _mixerService = new AudioMixerService();
-
+        _intercom = ServiceHelper.Get<IntercomService>();
         Loaded += OnPageLoaded;
     }
 
     private async void OnPageLoaded(object? sender, EventArgs e)
     {
-        // MVP 2: Permissions pruefen und anfordern
-        if (!await CheckAndRequestPermissionsAsync())
+        if (!await PermissionHelper.CheckAndRequestAsync(this))
         {
-            NetworkStatusLabel.Text = "Permissions verweigert";
+            NetworkStatusLabel.Text = "Berechtigungen verweigert";
             NetworkNameLabel.Text = "Bitte Berechtigungen in Einstellungen aktivieren";
             return;
         }
 
-        // MVP 1: Nur UI anzeigen, keine echte Hosting-Funktion
-        NetworkStatusLabel.Text = "Host Mode (Demo)";
-        NetworkNameLabel.Text = "Netzwerk-Funktionalitaet kommt in spaeteren MVPs";
+        try
+        {
+            await _intercom.StartHostAsync();
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Fehler", $"Host konnte nicht gestartet werden: {ex.Message}", "OK");
+            await Navigation.PopAsync();
+            return;
+        }
+
+        _intercom.StateChanged += OnIntercomStateChanged;
+
+        // Client-Latenzen regelmaessig aktualisieren
+        _refreshTimer = Dispatcher.CreateTimer();
+        _refreshTimer.Interval = TimeSpan.FromSeconds(1);
+        _refreshTimer.Tick += (_, _) => UpdateUi();
+        _refreshTimer.Start();
+
+        UpdateUi();
     }
 
-    private async Task<bool> CheckAndRequestPermissionsAsync()
+    private void OnIntercomStateChanged(object? sender, EventArgs e) =>
+        MainThread.BeginInvokeOnMainThread(UpdateUi);
+
+    private void UpdateUi()
     {
-        // Mikrofon-Permission
-        var micStatus = await Permissions.CheckStatusAsync<Permissions.Microphone>();
-        if (micStatus != PermissionStatus.Granted)
-        {
-            micStatus = await Permissions.RequestAsync<Permissions.Microphone>();
-            if (micStatus != PermissionStatus.Granted)
-            {
-                await DisplayAlert("Permission", "Mikrofon-Berechtigung wird benoetigt", "OK");
-                return false;
-            }
-        }
+        var clients = _intercom.Network.ConnectedClients.OrderBy(c => c.ClientName).ToList();
+        ClientsListView.ItemsSource = clients;
+        ClientsListContainer.IsVisible = clients.Count > 0;
 
-        // Location-Permission (fuer WiFi)
-        var locStatus = await Permissions.CheckStatusAsync<Permissions.LocationWhenInUse>();
-        if (locStatus != PermissionStatus.Granted)
-        {
-            locStatus = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
-            if (locStatus != PermissionStatus.Granted)
-            {
-                await DisplayAlert("Permission", "Standort-Berechtigung wird fuer WiFi benoetigt", "OK");
-                return false;
-            }
-        }
-
-        // Nearby WiFi Permission fuer Android 13+
-#if ANDROID
-        if (Android.OS.Build.VERSION.SdkInt >= Android.OS.BuildVersionCodes.Tiramisu)
-        {
-            var activity = Microsoft.Maui.ApplicationModel.Platform.CurrentActivity;
-            if (activity != null)
-            {
-                var permission = Android.Manifest.Permission.NearbyWifiDevices;
-                var status = AndroidX.Core.Content.ContextCompat.CheckSelfPermission(activity, permission);
-
-                if (status != Android.Content.PM.Permission.Granted)
-                {
-                    AndroidX.Core.App.ActivityCompat.RequestPermissions(activity, new[] { permission }, 1);
-                    await Task.Delay(1000);
-                }
-            }
-        }
-#endif
-
-        return true;
+        var ips = string.Join(", ", UdpNetworkService.GetLocalIpAddresses());
+        NetworkStatusLabel.Text = $"Hosting als {AppSettings.RiderName} - {clients.Count} Rider verbunden";
+        NetworkNameLabel.Text = $"IP: {ips} : {AppSettings.Port}";
+        MuteIcon.Text = _intercom.IsMuted ? "🔇" : "🎤";
     }
 
     private void OnMuteToggled(object? sender, EventArgs e)
     {
-        _isMuted = !_isMuted;
-        MuteIcon.Text = _isMuted ? "🎤" : "🔇";
+        _intercom.IsMuted = !_intercom.IsMuted;
+        MuteIcon.Text = _intercom.IsMuted ? "🔇" : "🎤";
     }
 
-    private void OnSettingsClicked(object? sender, EventArgs e)
+    private async void OnSettingsClicked(object? sender, EventArgs e)
     {
-        DisplayAlert("Einstellungen", "Einstellungen kommen in spaeteren MVPs", "OK");
+        await DisplayAlert("Einstellungen", "Einstellungen kommen in spaeteren Versionen", "OK");
     }
 
     private async void OnStopHostClicked(object? sender, EventArgs e)
@@ -107,8 +77,16 @@ public partial class HostPage : ContentPage
         await Navigation.PopAsync();
     }
 
-    protected override void OnDisappearing()
+    // Nur beim Zurueck-Navigieren stoppen (nicht beim Oeffnen einer weiteren Seite)
+    protected override async void OnNavigatedFrom(NavigatedFromEventArgs args)
     {
-        base.OnDisappearing();
+        base.OnNavigatedFrom(args);
+
+        if (args.NavigationType != NavigationType.Pop)
+            return;
+
+        _refreshTimer?.Stop();
+        _intercom.StateChanged -= OnIntercomStateChanged;
+        await _intercom.StopAsync();
     }
 }

@@ -14,4 +14,7 @@ public interface IAudioService
     float Volume { get; set; }
     bool IsRecording { get; }
     bool IsPlaying { get; }
+
+    // Max. Anzahl Chunks im Abspiel-Puffer, aeltere werden verworfen
+    int MaxQueuedChunks { get; set; }
 }
