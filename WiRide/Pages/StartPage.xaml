@@ -63,7 +63,7 @@
                 <Border.GestureRecognizers>
                     <TapGestureRecognizer Tapped="OnClientButtonClicked"/>
                 </Border.GestureRecognizers>
-                
+
                 <VerticalStackLayout Spacing="8" VerticalOptions="Center">
                     <Label Text="Join as Client"
                            FontSize="24"
@@ -73,6 +73,33 @@
                     <Label Text="Connect to existing group"
                            FontSize="14"
                            TextColor="#1E3A1E"
+                           HorizontalOptions="Center"/>
+                </VerticalStackLayout>
+            </Border>
+
+            <Border x:Name="AudioTestButton"
+                    BackgroundColor="#FF9500"
+                    StrokeThickness="0"
+                    Padding="0"
+                    HeightRequest="80"
+                    Margin="0,10"
+                    IsVisible="False">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="20"/>
+                </Border.StrokeShape>
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnAudioTestButtonClicked"/>
+                </Border.GestureRecognizers>
+
+                <VerticalStackLayout Spacing="5" VerticalOptions="Center">
+                    <Label Text="Audio Test"
+                           FontSize="20"
+                           FontAttributes="Bold"
+                           TextColor="#1C1C1E"
+                           HorizontalOptions="Center"/>
+                    <Label Text="DEBUG ONLY"
+                           FontSize="12"
+                           TextColor="#1C1C1E"
                            HorizontalOptions="Center"/>
                 </VerticalStackLayout>
             </Border>

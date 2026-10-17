@@ -12,13 +12,13 @@ public class AndroidAudioService : IAudioService
     private bool _isPlaying = false;
     private bool _isMuted = false;
     private float _volume = 0.8f;
-    
+
     private const int SampleRate = 16000;
     private const ChannelIn RecordChannelConfig = ChannelIn.Mono;
     private const ChannelOut PlayChannelConfig = ChannelOut.Mono;
     private const Encoding AudioFormat = Encoding.Pcm16bit;
     private const int BufferSize = 1024;
-    
+
     private readonly ConcurrentQueue<byte[]> _playbackQueue = new();
     private CancellationTokenSource? _recordCts;
     private CancellationTokenSource? _playCts;
@@ -127,12 +127,17 @@ public class AndroidAudioService : IAudioService
     public Task StartPlaybackAsync()
     {
         if (_isPlaying)
+        {
+            System.Diagnostics.Debug.WriteLine("StartPlaybackAsync: Bereits aktiv!");
             return Task.CompletedTask;
+        }
 
         try
         {
+            System.Diagnostics.Debug.WriteLine("StartPlaybackAsync: Starte...");
+
             int minBufferSize = AudioTrack.GetMinBufferSize(SampleRate, PlayChannelConfig, AudioFormat);
-            
+
             _audioTrack = new AudioTrack.Builder()
                 .SetAudioAttributes(new AudioAttributes.Builder()!
                     .SetUsage(AudioUsageKind.VoiceCommunication)!
@@ -148,6 +153,7 @@ public class AndroidAudioService : IAudioService
 
             if (_audioTrack?.State != AudioTrackState.Initialized)
             {
+                System.Diagnostics.Debug.WriteLine("AudioTrack initialization fehlgeschlagen!");
                 throw new Exception("AudioTrack initialization failed");
             }
 
@@ -158,10 +164,13 @@ public class AndroidAudioService : IAudioService
             _playCts = new CancellationTokenSource();
             Task.Run(() => PlaybackLoop(_playCts.Token));
 
+            System.Diagnostics.Debug.WriteLine("StartPlaybackAsync: Erfolgreich gestartet!");
+
             return Task.CompletedTask;
         }
         catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"StartPlaybackAsync Fehler: {ex.Message}");
             throw new Exception($"Failed to start playback: {ex.Message}");
         }
     }
@@ -216,11 +225,36 @@ public class AndroidAudioService : IAudioService
         {
             _playbackQueue.Enqueue(audioData);
 
-            // Limit Warteschlange
-            while (_playbackQueue.Count > 20)
+            // Queue-Limit auf 1 Million Chunks (~1 GB RAM)
+            // 
+            // Warum? Bei lokalem Test kein Problem, aber beim Netzwerk-Streaming
+            // kommen die Chunks unregelmaessig an (WiFi-Bursts, Delays, usw...).
+            // Ohne Limit koennte die Queue endlos wachsen wenn mehr reinkommt
+            // als abgespielt wird -> irgendwann RAM voll = Katastrophe.
+            //
+            // Das ist viel, aber moderne Handys haben 8-12 GB RAM und der Host
+            // sollte eh ein starkes Geraet sein. Wenn die Queue 1 GB erreicht haben
+            // wir sowieso groessere Probleme (Netzwerk komplett verloren oder
+            // 50 Clients gleichzeitig verbunden). In der Praxis wird die Queue
+            // bei normalem Betrieb eh nur bei ein paar hundert Chunks liegen.
+
+            int maxQueueSize = 1_000_000; // 1 Million Chunks = ~1 GB
+
+            if (_playbackQueue.Count > maxQueueSize)
             {
                 _playbackQueue.TryDequeue(out _);
+                System.Diagnostics.Debug.WriteLine($"Queue overflow! Chunk verworfen (limit: {maxQueueSize})");
             }
+
+            // Debug-Output nur alle 1000 Chunks oder wenn Queue kritisch wird
+            if (_playbackQueue.Count > 10000 || _playbackQueue.Count % 1000 == 0)
+            {
+                System.Diagnostics.Debug.WriteLine($"Audio Queue: {_playbackQueue.Count} chunks ({_playbackQueue.Count / 1000} MB)");
+            }
+        }
+        else
+        {
+            System.Diagnostics.Debug.WriteLine($"PlayAudioAsync failed - IsPlaying: {_isPlaying}, DataLength: {audioData.Length}");
         }
 
         return Task.CompletedTask;

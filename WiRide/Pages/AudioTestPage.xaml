@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="WiRide.Pages.AudioTestPage"
+             BackgroundColor="#2C2C2E"
+             Title="Audio Test (DEBUG ONLY)">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="20">
+            
+            <!-- Test Warning -->
+            <Border BackgroundColor="#FF9500"
+                    StrokeThickness="0"
+                    Padding="15">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="10"/>
+                </Border.StrokeShape>
+                <Label Text="TEST MODE - Nur fuer Entwicklung"
+                       FontSize="16"
+                       FontAttributes="Bold"
+                       TextColor="#1C1C1E"
+                       HorizontalOptions="Center"/>
+            </Border>
+
+            <!-- Recording Status -->
+            <VerticalStackLayout Spacing="10">
+                <Label Text="Recording Status"
+                       FontSize="20"
+                       FontAttributes="Bold"
+                       TextColor="White"/>
+                
+                <Label x:Name="RecordingStatusLabel"
+                       Text="Recording: No"
+                       FontSize="16"
+                       TextColor="White"/>
+                
+                <Label x:Name="AudioLevelLabel"
+                       Text="Audio Level: 0"
+                       FontSize="16"
+                       TextColor="White"/>
+            </VerticalStackLayout>
+
+            <!-- Recording Controls -->
+            <VerticalStackLayout Spacing="10">
+                <Button x:Name="StartRecordingButton"
+                       Text="Start Recording"
+                       BackgroundColor="#FF3B30"
+                       TextColor="White"
+                       CornerRadius="10"
+                       Clicked="OnStartRecordingClicked"/>
+                
+                <Button x:Name="StopRecordingButton"
+                       Text="Stop Recording"
+                       BackgroundColor="#8E8E93"
+                       TextColor="White"
+                       CornerRadius="10"
+                       Clicked="OnStopRecordingClicked"
+                       IsEnabled="False"/>
+            </VerticalStackLayout>
+
+            <!-- Playback Controls -->
+            <VerticalStackLayout Spacing="10">
+                <Label Text="Playback"
+                       FontSize="20"
+                       FontAttributes="Bold"
+                       TextColor="White"/>
+                
+                <Button x:Name="PlayRecordingButton"
+                       Text="Play Recording"
+                       BackgroundColor="#30D158"
+                       TextColor="White"
+                       CornerRadius="10"
+                       Clicked="OnPlayRecordingClicked"
+                       IsEnabled="False"/>
+            </VerticalStackLayout>
+
+            <!-- Mute Test -->
+            <VerticalStackLayout Spacing="10">
+                <Label Text="Mute Test"
+                       FontSize="20"
+                       FontAttributes="Bold"
+                       TextColor="White"/>
+                
+                <HorizontalStackLayout Spacing="10">
+                    <Button x:Name="MuteButton"
+                           Text="🎤 Mute"
+                           BackgroundColor="#007AFF"
+                           TextColor="White"
+                           CornerRadius="10"
+                           Clicked="OnMuteClicked"
+                           HorizontalOptions="FillAndExpand"/>
+                    
+                    <Button x:Name="UnmuteButton"
+                           Text="🔇 Unmute"
+                           BackgroundColor="#007AFF"
+                           TextColor="White"
+                           CornerRadius="10"
+                           Clicked="OnUnmuteClicked"
+                           HorizontalOptions="FillAndExpand"/>
+                </HorizontalStackLayout>
+                
+                <Label x:Name="MuteStatusLabel"
+                       Text="Status: Nicht stummgeschaltet"
+                       FontSize="14"
+                       TextColor="#8E8E93"/>
+            </VerticalStackLayout>
+            </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>
