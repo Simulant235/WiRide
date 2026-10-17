@@ -38,7 +38,7 @@ public partial class HostPage : ContentPage
         }
         catch (Exception ex)
         {
-            await DisplayAlert("Fehler", $"Host konnte nicht gestartet werden: {ex.Message}", "OK");
+            await DisplayAlertAsync("Fehler", $"Host konnte nicht gestartet werden: {ex.Message}", "OK");
             await Navigation.PopAsync();
             return;
         }
@@ -57,7 +57,7 @@ public partial class HostPage : ContentPage
     // Netzwerk fuer die Gruppe bereitstellen: eigener Hotspot, manueller Hotspot oder bestehendes WLAN
     private async Task SetupNetworkAsync()
     {
-        var choice = await DisplayActionSheet("Netzwerk fuer die Gruppe", null, null,
+        var choice = await DisplayActionSheetAsync("Netzwerk fuer die Gruppe", null, null,
             HotspotOption, ManualHotspotOption, CurrentWifiOption);
 
         if (choice == HotspotOption)
@@ -65,7 +65,7 @@ public partial class HostPage : ContentPage
             NetworkStatusLabel.Text = "Starte Hotspot...";
             if (await _wifi.StartHotspotAsync() == null)
             {
-                await DisplayAlert("Hotspot",
+                await DisplayAlertAsync("Hotspot",
                     "Der automatische Hotspot konnte nicht gestartet werden (Standort aktiviert?). " +
                     "Bitte den Handy-Hotspot manuell aktivieren.", "Einstellungen oeffnen");
                 _wifi.OpenHotspotSettings();
@@ -103,7 +103,7 @@ public partial class HostPage : ContentPage
 
     private async void OnSettingsClicked(object? sender, EventArgs e)
     {
-        await DisplayAlert("Einstellungen", "Einstellungen kommen in spaeteren Versionen", "OK");
+        await DisplayAlertAsync("Einstellungen", "Einstellungen kommen in spaeteren Versionen", "OK");
     }
 
     private async void OnStopHostClicked(object? sender, EventArgs e)

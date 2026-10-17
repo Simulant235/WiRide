@@ -51,11 +51,11 @@ public partial class ClientPage : ContentPage
 
             NetworkStatusLabel.Text = $"Verbinde mit {host.Name}...";
             if (!await _intercom.StartClientAsync(host.IpAddress))
-                await DisplayAlert("Verbindung", $"Host {host.IpAddress} antwortet nicht.", "OK");
+                await DisplayAlertAsync("Verbindung", $"Host {host.IpAddress} antwortet nicht.", "OK");
         }
         catch (Exception ex)
         {
-            await DisplayAlert("Fehler", $"Verbindung fehlgeschlagen: {ex.Message}", "OK");
+            await DisplayAlertAsync("Fehler", $"Verbindung fehlgeschlagen: {ex.Message}", "OK");
         }
         finally
         {
@@ -72,7 +72,7 @@ public partial class ClientPage : ContentPage
         if (host != null)
             return host;
 
-        var choice = await DisplayActionSheet("Kein Host im aktuellen WLAN gefunden", "Abbrechen", null,
+        var choice = await DisplayActionSheetAsync("Kein Host im aktuellen WLAN gefunden", "Abbrechen", null,
             PickWifiOption, ManualIpOption);
 
         if (choice == PickWifiOption)
@@ -89,7 +89,7 @@ public partial class ClientPage : ContentPage
             NetworkStatusLabel.Text = $"Verbinde mit WLAN {ssid}...";
             if (!await _wifi.ConnectToNetworkAsync(ssid, password))
             {
-                await DisplayAlert("WLAN", $"Verbindung mit {ssid} fehlgeschlagen.", "OK");
+                await DisplayAlertAsync("WLAN", $"Verbindung mit {ssid} fehlgeschlagen.", "OK");
                 return null;
             }
 
@@ -134,7 +134,7 @@ public partial class ClientPage : ContentPage
         if (hosts.Count <= 1)
             return hosts.FirstOrDefault();
 
-        var choice = await DisplayActionSheet("Host waehlen", "Abbrechen", null,
+        var choice = await DisplayActionSheetAsync("Host waehlen", "Abbrechen", null,
             hosts.Select(h => $"{h.Name} ({h.IpAddress})").ToArray());
         return hosts.FirstOrDefault(h => choice == $"{h.Name} ({h.IpAddress})");
     }
@@ -180,7 +180,7 @@ public partial class ClientPage : ContentPage
 
     private async void OnSettingsClicked(object? sender, EventArgs e)
     {
-        await DisplayAlert("Einstellungen", "Einstellungen kommen in spaeteren Versionen", "OK");
+        await DisplayAlertAsync("Einstellungen", "Einstellungen kommen in spaeteren Versionen", "OK");
     }
 
     private async void OnDisconnectClicked(object? sender, EventArgs e)

@@ -49,7 +49,7 @@ public partial class NetworkSelectionPage : ContentPage
         }
         catch (Exception ex)
         {
-            await DisplayAlert("Fehler", $"Netzwerk-Scan fehlgeschlagen: {ex.Message}", "OK");
+            await DisplayAlertAsync("Fehler", $"Netzwerk-Scan fehlgeschlagen: {ex.Message}", "OK");
         }
         finally
         {
