@@ -50,6 +50,13 @@ public static class AppSettings
         set => Preferences.Set(nameof(AutoReconnect), value);
     }
 
+    // Opus-Kompression fuer gesendetes Audio (Empfang erkennt den Codec pro Paket)
+    public static bool UseOpus
+    {
+        get => Preferences.Get(nameof(UseOpus), true);
+        set => Preferences.Set(nameof(UseOpus), value);
+    }
+
     public static string LastHostIp
     {
         get => Preferences.Get(nameof(LastHostIp), string.Empty);

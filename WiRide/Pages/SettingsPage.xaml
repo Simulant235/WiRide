@@ -35,6 +35,13 @@
 
             <Label Text="Erweitert" TextColor="#FFD60A" FontSize="16" FontAttributes="Bold" Margin="0,10,0,0"/>
 
+            <Grid ColumnDefinitions="*,Auto">
+                <Label Text="Opus-Kompression (spart Bandbreite)"
+                       TextColor="White"
+                       VerticalOptions="Center"/>
+                <Switch x:Name="OpusSwitch" Grid.Column="1" OnColor="#30D158"/>
+            </Grid>
+
             <Label Text="Server-Port (alle Geraete gleich)" TextColor="#8E8E93" FontSize="14"/>
             <Entry x:Name="PortEntry"
                    Keyboard="Numeric"
@@ -47,7 +54,7 @@
                     BackgroundColor="#3A3A3C"/>
 
             <Label x:Name="HintLabel"
-                   Text="Aenderungen an Port und Sample-Rate gelten ab der naechsten Verbindung."
+                   Text="Aenderungen an Port, Sample-Rate und Opus gelten ab der naechsten Verbindung."
                    TextColor="#8E8E93"
                    FontSize="12"/>
 

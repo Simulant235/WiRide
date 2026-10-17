@@ -44,6 +44,7 @@ namespace WiRide
 
             builder.Services.AddSingleton<INetworkService, UdpNetworkService>();
             builder.Services.AddSingleton<AudioMixerService>();
+            builder.Services.AddSingleton<AudioCodecService>();
             builder.Services.AddSingleton<IntercomService>();
 
 #if DEBUG
