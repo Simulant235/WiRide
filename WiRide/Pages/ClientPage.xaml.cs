@@ -5,7 +5,11 @@ namespace WiRide.Pages;
 
 public partial class ClientPage : ContentPage
 {
+    private const string PickWifiOption = "WiRide-WLAN waehlen";
+    private const string ManualIpOption = "Host-IP manuell eingeben";
+
     private readonly IntercomService _intercom;
+    private readonly IWiFiService _wifi;
     private bool _busy;
 
     public ClientPage()
@@ -13,6 +17,7 @@ public partial class ClientPage : ContentPage
         InitializeComponent();
 
         _intercom = ServiceHelper.Get<IntercomService>();
+        _wifi = ServiceHelper.Get<IWiFiService>();
         Loaded += OnPageLoaded;
     }
 
@@ -60,30 +65,78 @@ public partial class ClientPage : ContentPage
         }
     }
 
-    // Host per Broadcast suchen, sonst IP manuell eingeben
+    // 1. Host im aktuellen WLAN suchen  2. WiRide-WLAN waehlen  3. IP manuell
     private async Task<DiscoveredHost?> FindHostAsync()
     {
-        NetworkStatusLabel.Text = "Suche Host...";
-        var hosts = await _intercom.Network.DiscoverHostsAsync(AppSettings.Port);
+        var host = await DiscoverAsync();
+        if (host != null)
+            return host;
 
-        if (hosts.Count == 1)
-            return hosts[0];
+        var choice = await DisplayActionSheet("Kein Host im aktuellen WLAN gefunden", "Abbrechen", null,
+            PickWifiOption, ManualIpOption);
 
-        if (hosts.Count > 1)
+        if (choice == PickWifiOption)
         {
-            var choice = await DisplayActionSheet("Host waehlen", "Abbrechen", null,
-                hosts.Select(h => $"{h.Name} ({h.IpAddress})").ToArray());
-            return hosts.FirstOrDefault(h => choice == $"{h.Name} ({h.IpAddress})");
+            var ssid = await NetworkSelectionPage.PickAsync(Navigation);
+            if (ssid == null)
+                return null;
+
+            var password = await DisplayPromptAsync(ssid, "WLAN-Passwort (wird auf dem Host angezeigt):",
+                "Verbinden", "Abbrechen");
+            if (password == null)
+                return null;
+
+            NetworkStatusLabel.Text = $"Verbinde mit WLAN {ssid}...";
+            if (!await _wifi.ConnectToNetworkAsync(ssid, password))
+            {
+                await DisplayAlert("WLAN", $"Verbindung mit {ssid} fehlgeschlagen.", "OK");
+                return null;
+            }
+
+            host = await DiscoverAsync();
+
+            // Fallback: beim Hotspot ist der Host fast immer das Gateway
+            var gateway = _wifi.GatewayIp;
+            if (host == null && gateway != null)
+                host = new DiscoveredHost { Name = gateway, IpAddress = gateway };
+
+            return host;
         }
 
-        var ip = await DisplayPromptAsync("Kein Host gefunden",
-            "Host-IP manuell eingeben (wird auf der Host-Seite angezeigt):",
-            "Verbinden", "Abbrechen",
-            placeholder: "192.168.43.1",
-            initialValue: AppSettings.LastHostIp,
-            keyboard: Keyboard.Numeric);
+        if (choice == ManualIpOption)
+        {
+            var ip = await DisplayPromptAsync("Host-IP",
+                "Host-IP eingeben (wird auf der Host-Seite angezeigt):",
+                "Verbinden", "Abbrechen",
+                placeholder: "192.168.43.1",
+                initialValue: AppSettings.LastHostIp,
+                keyboard: Keyboard.Numeric);
 
-        return string.IsNullOrWhiteSpace(ip) ? null : new DiscoveredHost { Name = ip.Trim(), IpAddress = ip.Trim() };
+            if (!string.IsNullOrWhiteSpace(ip))
+                return new DiscoveredHost { Name = ip.Trim(), IpAddress = ip.Trim() };
+        }
+
+        return null;
+    }
+
+    private async Task<DiscoveredHost?> DiscoverAsync()
+    {
+        NetworkStatusLabel.Text = "Suche Host...";
+
+        var extraTargets = new List<string>();
+        if (_wifi.GatewayIp is { } gateway)
+            extraTargets.Add(gateway);
+        if (!string.IsNullOrEmpty(AppSettings.LastHostIp))
+            extraTargets.Add(AppSettings.LastHostIp);
+
+        var hosts = await _intercom.Network.DiscoverHostsAsync(AppSettings.Port, extraTargets);
+
+        if (hosts.Count <= 1)
+            return hosts.FirstOrDefault();
+
+        var choice = await DisplayActionSheet("Host waehlen", "Abbrechen", null,
+            hosts.Select(h => $"{h.Name} ({h.IpAddress})").ToArray());
+        return hosts.FirstOrDefault(h => choice == $"{h.Name} ({h.IpAddress})");
     }
 
     private void OnIntercomStateChanged(object? sender, EventArgs e) =>
@@ -146,5 +199,6 @@ public partial class ClientPage : ContentPage
 
         _intercom.StateChanged -= OnIntercomStateChanged;
         await _intercom.StopAsync();
+        await _wifi.DisconnectFromNetworkAsync();
     }
 }

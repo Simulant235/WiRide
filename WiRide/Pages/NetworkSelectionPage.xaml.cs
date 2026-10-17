@@ -4,16 +4,22 @@ namespace WiRide.Pages;
 
 public partial class NetworkSelectionPage : ContentPage
 {
-    private readonly IWiFiService? _wifiService;
-    private string? _selectedNetwork;
-
-    public event EventHandler<string>? NetworkSelected;
+    private readonly IWiFiService _wifiService;
+    private readonly TaskCompletionSource<string?> _result = new();
 
     public NetworkSelectionPage()
     {
         InitializeComponent();
-        _wifiService = Handler?.MauiContext?.Services.GetService<IWiFiService>();
+        _wifiService = ServiceHelper.Get<IWiFiService>();
         Loaded += OnPageLoaded;
+    }
+
+    // Oeffnet die Seite modal und liefert die gewaehlte SSID (oder null)
+    public static async Task<string?> PickAsync(INavigation navigation)
+    {
+        var page = new NetworkSelectionPage();
+        await navigation.PushModalAsync(page);
+        return await page._result.Task;
     }
 
     private async void OnPageLoaded(object? sender, EventArgs e)
@@ -30,18 +36,16 @@ public partial class NetworkSelectionPage : ContentPage
             RefreshButton.IsEnabled = false;
             NoNetworksLabel.IsVisible = false;
 
-            if (_wifiService != null)
-            {
-                var networks = await _wifiService.ScanNetworksAsync();
-                var wiRideNetworks = networks.Where(n => n.StartsWith("WiRide_")).ToList();
+            var networks = await _wifiService.ScanNetworksAsync();
 
-                NetworksListView.ItemsSource = wiRideNetworks;
+            // WiRide-/Hotspot-Netzwerke zuerst (LocalOnlyHotspot heisst meist "AndroidShare_...")
+            var sorted = networks
+                .OrderByDescending(IsLikelyWiRideNetwork)
+                .ThenBy(n => n)
+                .ToList();
 
-                if (wiRideNetworks.Count == 0)
-                {
-                    NoNetworksLabel.IsVisible = true;
-                }
-            }
+            NetworksListView.ItemsSource = sorted;
+            NoNetworksLabel.IsVisible = sorted.Count == 0;
         }
         catch (Exception ex)
         {
@@ -55,23 +59,17 @@ public partial class NetworkSelectionPage : ContentPage
         }
     }
 
+    private static bool IsLikelyWiRideNetwork(string ssid) =>
+        ssid.StartsWith("WiRide", StringComparison.OrdinalIgnoreCase) ||
+        ssid.StartsWith("AndroidShare", StringComparison.OrdinalIgnoreCase) ||
+        ssid.StartsWith("DIRECT-", StringComparison.OrdinalIgnoreCase);
+
     private async void OnNetworkSelected(object? sender, TappedEventArgs e)
     {
         if (e.Parameter is string networkName)
         {
-            _selectedNetwork = networkName;
-
-            var connect = await DisplayAlert(
-                "Verbinden",
-                $"Mit {networkName} verbinden?",
-                "Verbinden",
-                "Abbrechen");
-
-            if (connect)
-            {
-                NetworkSelected?.Invoke(this, networkName);
-                await Navigation.PopModalAsync();
-            }
+            _result.TrySetResult(networkName);
+            await Navigation.PopModalAsync();
         }
     }
 
@@ -82,6 +80,13 @@ public partial class NetworkSelectionPage : ContentPage
 
     private async void OnCancelClicked(object? sender, EventArgs e)
     {
+        _result.TrySetResult(null);
         await Navigation.PopModalAsync();
+    }
+
+    protected override bool OnBackButtonPressed()
+    {
+        _result.TrySetResult(null);
+        return base.OnBackButtonPressed();
     }
 }

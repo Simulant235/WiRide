@@ -73,12 +73,15 @@ namespace WiRide
     public class MockWiFiService : IWiFiService
     {
         public bool IsHotspotEnabled => false;
-        public bool IsConnectedToWiFi => false;
+        public HotspotInfo? CurrentHotspot => null;
+        public bool IsConnectedToWiFi => true;
         public string? CurrentNetworkSsid => null;
-        public Task<bool> StartHotspotAsync(string ssid, string password) => Task.FromResult(true);
-        public Task<bool> StopHotspotAsync() => Task.FromResult(true);
-        public Task<bool> ConnectToNetworkAsync(string ssid, string password) => Task.FromResult(true);
-        public Task<bool> DisconnectFromNetworkAsync() => Task.FromResult(true);
-        public Task<List<string>> ScanNetworksAsync() => Task.FromResult(new List<string> { "WiRide_Test1", "WiRide_Test2" });
+        public string? GatewayIp => null;
+        public Task<HotspotInfo?> StartHotspotAsync() => Task.FromResult<HotspotInfo?>(null);
+        public Task StopHotspotAsync() => Task.CompletedTask;
+        public void OpenHotspotSettings() { }
+        public Task<bool> ConnectToNetworkAsync(string ssid, string password) => Task.FromResult(false);
+        public Task DisconnectFromNetworkAsync() => Task.CompletedTask;
+        public Task<List<string>> ScanNetworksAsync() => Task.FromResult(new List<string>());
     }
 }

@@ -4,7 +4,12 @@ namespace WiRide.Pages;
 
 public partial class HostPage : ContentPage
 {
+    private const string HotspotOption = "WiRide-Hotspot starten (empfohlen)";
+    private const string ManualHotspotOption = "Handy-Hotspot manuell aktivieren";
+    private const string CurrentWifiOption = "Aktuelles WLAN nutzen";
+
     private readonly IntercomService _intercom;
+    private readonly IWiFiService _wifi;
     private IDispatcherTimer? _refreshTimer;
 
     public HostPage()
@@ -12,6 +17,7 @@ public partial class HostPage : ContentPage
         InitializeComponent();
 
         _intercom = ServiceHelper.Get<IntercomService>();
+        _wifi = ServiceHelper.Get<IWiFiService>();
         Loaded += OnPageLoaded;
     }
 
@@ -23,6 +29,8 @@ public partial class HostPage : ContentPage
             NetworkNameLabel.Text = "Bitte Berechtigungen in Einstellungen aktivieren";
             return;
         }
+
+        await SetupNetworkAsync();
 
         try
         {
@@ -46,6 +54,29 @@ public partial class HostPage : ContentPage
         UpdateUi();
     }
 
+    // Netzwerk fuer die Gruppe bereitstellen: eigener Hotspot, manueller Hotspot oder bestehendes WLAN
+    private async Task SetupNetworkAsync()
+    {
+        var choice = await DisplayActionSheet("Netzwerk fuer die Gruppe", null, null,
+            HotspotOption, ManualHotspotOption, CurrentWifiOption);
+
+        if (choice == HotspotOption)
+        {
+            NetworkStatusLabel.Text = "Starte Hotspot...";
+            if (await _wifi.StartHotspotAsync() == null)
+            {
+                await DisplayAlert("Hotspot",
+                    "Der automatische Hotspot konnte nicht gestartet werden (Standort aktiviert?). " +
+                    "Bitte den Handy-Hotspot manuell aktivieren.", "Einstellungen oeffnen");
+                _wifi.OpenHotspotSettings();
+            }
+        }
+        else if (choice == ManualHotspotOption)
+        {
+            _wifi.OpenHotspotSettings();
+        }
+    }
+
     private void OnIntercomStateChanged(object? sender, EventArgs e) =>
         MainThread.BeginInvokeOnMainThread(UpdateUi);
 
@@ -57,7 +88,10 @@ public partial class HostPage : ContentPage
 
         var ips = string.Join(", ", UdpNetworkService.GetLocalIpAddresses());
         NetworkStatusLabel.Text = $"Hosting als {AppSettings.RiderName} - {clients.Count} Rider verbunden";
-        NetworkNameLabel.Text = $"IP: {ips} : {AppSettings.Port}";
+        var hotspot = _wifi.CurrentHotspot;
+        NetworkNameLabel.Text = hotspot != null
+            ? $"WLAN: {hotspot.Ssid}  Passwort: {hotspot.Password}\nIP: {ips}"
+            : $"IP: {ips} : {AppSettings.Port}";
         MuteIcon.Text = _intercom.IsMuted ? "🔇" : "🎤";
     }
 
@@ -88,5 +122,6 @@ public partial class HostPage : ContentPage
         _refreshTimer?.Stop();
         _intercom.StateChanged -= OnIntercomStateChanged;
         await _intercom.StopAsync();
+        await _wifi.StopHotspotAsync();
     }
 }
