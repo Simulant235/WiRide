@@ -103,7 +103,7 @@ public partial class HostPage : ContentPage
 
     private async void OnSettingsClicked(object? sender, EventArgs e)
     {
-        await DisplayAlertAsync("Einstellungen", "Einstellungen kommen in spaeteren Versionen", "OK");
+        await Navigation.PushAsync(new SettingsPage());
     }
 
     private async void OnStopHostClicked(object? sender, EventArgs e)

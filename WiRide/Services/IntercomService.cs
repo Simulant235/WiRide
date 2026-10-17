@@ -100,6 +100,7 @@ public class IntercomService
     private async Task StartAudioAsync()
     {
         _audio.MaxQueuedChunks = PlaybackQueueFrames;
+        _audio.Volume = AppSettings.Volume;
         await _audio.StartPlaybackAsync();
         await _audio.StartRecordingAsync();
     }

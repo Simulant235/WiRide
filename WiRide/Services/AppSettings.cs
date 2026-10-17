@@ -38,6 +38,12 @@ public static class AppSettings
         set => Preferences.Set(nameof(SampleRate), value);
     }
 
+    public static float Volume
+    {
+        get => Preferences.Get(nameof(Volume), 0.8f);
+        set => Preferences.Set(nameof(Volume), Math.Clamp(value, 0f, 1f));
+    }
+
     public static bool AutoReconnect
     {
         get => Preferences.Get(nameof(AutoReconnect), true);
