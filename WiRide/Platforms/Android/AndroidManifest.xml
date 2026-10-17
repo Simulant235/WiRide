@@ -11,6 +11,11 @@
 	<uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
 	<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+	<!-- Hintergrundbetrieb (Foreground-Service mit Mikrofon) -->
+	<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+	<uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+	<uses-permission android:name="android.permission.WAKE_LOCK" />
+
 	<!-- WiFi Hotspot Erlaubnis (Android 13+) -->
 	<uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES" />
 

@@ -59,6 +59,7 @@ public class IntercomService
         _mixCts = new CancellationTokenSource();
         _ = Task.Run(() => MixLoopAsync(_mixCts.Token));
 
+        StartBackgroundMode($"Host: {AppSettings.RiderName}");
         RaiseStateChanged();
     }
 
@@ -75,6 +76,7 @@ public class IntercomService
         Role = IntercomRole.Client;
         await StartAudioAsync();
 
+        StartBackgroundMode($"Verbunden mit {_network.HostName ?? hostIp}");
         RaiseStateChanged();
         return true;
     }
@@ -97,6 +99,7 @@ public class IntercomService
             await _network.DisconnectAsync();
 
         _mixer.Clear();
+        StopBackgroundMode();
         Role = IntercomRole.None;
         RaiseStateChanged();
     }
@@ -107,6 +110,21 @@ public class IntercomService
         _audio.Volume = AppSettings.Volume;
         await _audio.StartPlaybackAsync();
         await _audio.StartRecordingAsync();
+    }
+
+    // Android: Foreground-Service, damit Audio bei gesperrtem Bildschirm weiterlaeuft
+    private static void StartBackgroundMode(string text)
+    {
+#if ANDROID
+        Platforms.Android.Services.IntercomForegroundService.Start(text);
+#endif
+    }
+
+    private static void StopBackgroundMode()
+    {
+#if ANDROID
+        Platforms.Android.Services.IntercomForegroundService.Stop();
+#endif
     }
 
     private void Subscribe()
