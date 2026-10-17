@@ -180,7 +180,7 @@ public partial class ClientPage : ContentPage
 
     private async void OnSettingsClicked(object? sender, EventArgs e)
     {
-        await DisplayAlertAsync("Einstellungen", "Einstellungen kommen in spaeteren Versionen", "OK");
+        await Navigation.PushAsync(new SettingsPage());
     }
 
     private async void OnDisconnectClicked(object? sender, EventArgs e)

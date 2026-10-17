@@ -6,6 +6,16 @@
 
     <Grid RowDefinitions="Auto,*,Auto" Padding="20">
         
+        <ImageButton Grid.Row="0"
+                    Source="settings_icon.png"
+                    WidthRequest="40"
+                    HeightRequest="40"
+                    HorizontalOptions="End"
+                    VerticalOptions="Start"
+                    BackgroundColor="Transparent"
+                    Clicked="OnSettingsClicked"
+                    ZIndex="1"/>
+
         <!-- Header -->
         <VerticalStackLayout Grid.Row="0" Spacing="10" Margin="0,40,0,0">
             <Label Text="WiRide Intercom"

@@ -21,6 +21,11 @@ public partial class StartPage : ContentPage
         await Navigation.PushAsync(new ClientPage());
     }
 
+    private async void OnSettingsClicked(object? sender, EventArgs e)
+    {
+        await Navigation.PushAsync(new SettingsPage());
+    }
+
     private async void OnAudioTestButtonClicked(object? sender, EventArgs e)
     {
         await Navigation.PushAsync(new AudioTestPage());
