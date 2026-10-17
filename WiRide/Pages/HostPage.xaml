@@ -39,7 +39,7 @@
                                HeightRequest="100">
                     <CollectionView.ItemTemplate>
                         <DataTemplate>
-                            <Label Text="{Binding ClientName}"
+                            <Label Text="{Binding DisplayText}"
                                    FontSize="14"
                                    TextColor="#30D158"
                                    HorizontalOptions="Center"

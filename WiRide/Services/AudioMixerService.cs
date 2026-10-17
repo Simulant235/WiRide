@@ -1,93 +1,102 @@
-using WiRide.Models;
-
 namespace WiRide.Services;
 
+// Mix-Minus-Mixer fuer PCM 16-bit Mono.
+// Pro Tick wird von jeder Quelle ein Frame genommen und aufsummiert.
+// Jeder Teilnehmer bekommt die Summe OHNE seine eigene Stimme (kein Echo).
 public class AudioMixerService
 {
-    private readonly Dictionary<string, Queue<byte[]>> _clientAudioBuffers = new();
-    private readonly object _lockObject = new();
+    // Jitter-Buffer pro Quelle: max. 4 Frames (= 80 ms), aeltere werden verworfen
+    private const int MaxBufferedFrames = 4;
 
-    public void AddClientAudio(string clientId, byte[] audioData)
+    private readonly Dictionary<string, Queue<short[]>> _buffers = new();
+    private readonly object _lock = new();
+
+    public void AddClientAudio(string sourceId, byte[] pcm16)
     {
-        lock (_lockObject)
+        var samples = new short[pcm16.Length / 2];
+        Buffer.BlockCopy(pcm16, 0, samples, 0, samples.Length * 2);
+
+        lock (_lock)
         {
-            if (!_clientAudioBuffers.ContainsKey(clientId))
+            if (!_buffers.TryGetValue(sourceId, out var queue))
             {
-                _clientAudioBuffers[clientId] = new Queue<byte[]>();
+                queue = new Queue<short[]>();
+                _buffers[sourceId] = queue;
             }
 
-            _clientAudioBuffers[clientId].Enqueue(audioData);
-
-            if (_clientAudioBuffers[clientId].Count > 10)
-            {
-                _clientAudioBuffers[clientId].Dequeue();
-            }
+            queue.Enqueue(samples);
+            while (queue.Count > MaxBufferedFrames)
+                queue.Dequeue();
         }
     }
 
-    public byte[] MixAudioForClient(string excludeClientId, int bufferSize = 1024)
+    // Naechsten Frame aller Quellen holen. null = niemand spricht gerade.
+    public MixFrame? NextFrame(int frameSamples)
     {
-        lock (_lockObject)
+        lock (_lock)
         {
-            var mixedAudio = new float[bufferSize];
-            int clientCount = 0;
+            var frame = new MixFrame(frameSamples);
 
-            foreach (var kvp in _clientAudioBuffers)
+            foreach (var (sourceId, queue) in _buffers)
             {
-                // Mix-Minus: Audio dieses Clients ausschliessen
-                if (kvp.Key == excludeClientId)
+                if (queue.Count == 0)
                     continue;
 
-                if (kvp.Value.Count > 0)
-                {
-                    var audioData = kvp.Value.Dequeue();
+                var samples = queue.Dequeue();
+                frame.Parts[sourceId] = samples;
 
-                    // Bytes zu Float-Samples konvertieren und mischen
-                    for (int i = 0; i < Math.Min(audioData.Length, bufferSize); i++)
-                    {
-                        // Byte zu Float konvertieren (-1.0 bis 1.0)
-                        float sample = (audioData[i] - 128) / 128f;
-                        mixedAudio[i] += sample;
-                    }
-                    clientCount++;
-                }
+                int length = Math.Min(samples.Length, frameSamples);
+                for (int i = 0; i < length; i++)
+                    frame.Sum[i] += samples[i];
             }
 
-            // Gemischtes Audio normalisieren
-            if (clientCount > 0)
-            {
-                for (int i = 0; i < mixedAudio.Length; i++)
-                {
-                    mixedAudio[i] /= clientCount;
-                }
-            }
-
-            // Zurueck zu Bytes konvertieren
-            var result = new byte[bufferSize];
-            for (int i = 0; i < mixedAudio.Length; i++)
-            {
-                // Begrenzen und zu Byte konvertieren
-                float clamped = Math.Clamp(mixedAudio[i], -1f, 1f);
-                result[i] = (byte)((clamped * 128) + 128);
-            }
-
-            return result;
+            return frame.Parts.Count > 0 ? frame : null;
         }
     }
 
-    public void RemoveClient(string clientId)
+    // Mix-Minus: Summe aller Quellen ausser excludeId. null = nichts zu hoeren.
+    public static byte[]? MixMinus(MixFrame frame, string excludeId)
     {
-        lock (_lockObject)
+        frame.Parts.TryGetValue(excludeId, out var own);
+        if (frame.Parts.Count - (own != null ? 1 : 0) == 0)
+            return null;
+
+        var result = new byte[frame.Sum.Length * 2];
+        for (int i = 0; i < frame.Sum.Length; i++)
         {
-            _clientAudioBuffers.Remove(clientId);
+            int value = frame.Sum[i];
+            if (own != null && i < own.Length)
+                value -= own[i];
+
+            short clamped = (short)Math.Clamp(value, short.MinValue, short.MaxValue);
+            result[i * 2] = (byte)clamped;
+            result[i * 2 + 1] = (byte)(clamped >> 8);
+        }
+
+        return result;
+    }
+
+    public void RemoveClient(string sourceId)
+    {
+        lock (_lock)
+        {
+            _buffers.Remove(sourceId);
         }
     }
 
     public void Clear()
     {
-        lock (_lockObject)
+        lock (_lock)
         {
-            _clientAudioBuffers.Clear();
+            _buffers.Clear();
         }
     }
+}
+
+public sealed class MixFrame
+{
+    public MixFrame(int samples) => Sum = new int[samples];
+
+    public int[] Sum { get; }
+    public Dictionary<string, short[]> Parts { get; } = new();
 }
