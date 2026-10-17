@@ -15,6 +15,7 @@ public partial class SettingsPage : ContentPage
         VolumeSlider.Value = AppSettings.Volume;
         AutoReconnectSwitch.IsToggled = AppSettings.AutoReconnect;
         PortEntry.Text = AppSettings.Port.ToString();
+        OpusSwitch.IsToggled = AppSettings.UseOpus;
 
         SampleRatePicker.ItemsSource = AppSettings.SupportedSampleRates.Select(r => $"{r / 1000} kHz").ToList();
         SampleRatePicker.SelectedIndex = Array.IndexOf(AppSettings.SupportedSampleRates, AppSettings.SampleRate);
@@ -39,6 +40,7 @@ public partial class SettingsPage : ContentPage
         AppSettings.Volume = (float)VolumeSlider.Value;
         AppSettings.AutoReconnect = AutoReconnectSwitch.IsToggled;
         AppSettings.Port = port;
+        AppSettings.UseOpus = OpusSwitch.IsToggled;
 
         if (SampleRatePicker.SelectedIndex >= 0)
             AppSettings.SampleRate = AppSettings.SupportedSampleRates[SampleRatePicker.SelectedIndex];

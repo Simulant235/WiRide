@@ -23,13 +23,15 @@ public class IntercomService
     private readonly INetworkService _network;
     private readonly IAudioService _audio;
     private readonly AudioMixerService _mixer;
+    private readonly AudioCodecService _codec;
     private CancellationTokenSource? _mixCts;
 
-    public IntercomService(INetworkService network, IAudioService audio, AudioMixerService mixer)
+    public IntercomService(INetworkService network, IAudioService audio, AudioMixerService mixer, AudioCodecService codec)
     {
         _network = network;
         _audio = audio;
         _mixer = mixer;
+        _codec = codec;
     }
 
     public event EventHandler? StateChanged;
@@ -48,6 +50,7 @@ public class IntercomService
         await StopAsync();
 
         _mixer.Clear();
+        _codec.Clear();
         await _network.StartHostAsync(AppSettings.Port);
         Subscribe();
         Role = IntercomRole.Host;
@@ -62,6 +65,7 @@ public class IntercomService
     public async Task<bool> StartClientAsync(string hostIp)
     {
         await StopAsync();
+        _codec.Clear();
 
         if (!await _network.ConnectToHostAsync(hostIp, AppSettings.Port))
             return false;
@@ -130,18 +134,19 @@ public class IntercomService
         if (Role == IntercomRole.Host)
             _mixer.AddClientAudio(HostSourceId, pcm);
         else if (Role == IntercomRole.Client)
-            _network.SendAudio(pcm, AudioCodecType.Pcm16);
+            _network.SendAudio(_codec.Encode(HostSourceId, pcm), _codec.OutgoingCodec);
     }
 
     private void OnAudioPacketReceived(object? sender, AudioPacket packet)
     {
-        if (packet.Codec != AudioCodecType.Pcm16)
+        var pcm = _codec.Decode(packet.ClientId, packet);
+        if (pcm == null || pcm.Length == 0)
             return;
 
         if (Role == IntercomRole.Host)
-            _mixer.AddClientAudio(packet.ClientId, packet.AudioData);
+            _mixer.AddClientAudio(packet.ClientId, pcm);
         else if (Role == IntercomRole.Client)
-            _ = _audio.PlayAudioAsync(packet.AudioData);
+            _ = _audio.PlayAudioAsync(pcm);
     }
 
     // Host-Mix-Schleife: alle 20 ms einen Frame mischen und verteilen
@@ -161,7 +166,7 @@ public class IntercomService
                     {
                         var mix = AudioMixerService.MixMinus(frame, client.ClientId);
                         if (mix != null)
-                            _network.SendAudio(mix, AudioCodecType.Pcm16, client.ClientId);
+                            _network.SendAudio(_codec.Encode(client.ClientId, mix), _codec.OutgoingCodec, client.ClientId);
                     }
 
                     var hostMix = AudioMixerService.MixMinus(frame, HostSourceId);
@@ -192,6 +197,7 @@ public class IntercomService
     private void OnClientDisconnected(object? sender, string clientId)
     {
         _mixer.RemoveClient(clientId);
+        _codec.Remove(clientId);
         RaiseStateChanged();
     }
 
