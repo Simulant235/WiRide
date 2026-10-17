@@ -53,7 +53,7 @@
 
                 <!-- No Networks Found -->
                 <Label x:Name="NoNetworksLabel"
-                       Text="No WiRide networks found"
+                       Text="No networks found"
                        FontSize="14"
                        TextColor="#8E8E93"
                        HorizontalOptions="Center"

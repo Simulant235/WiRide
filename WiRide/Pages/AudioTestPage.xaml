@@ -88,7 +88,7 @@
                            TextColor="White"
                            CornerRadius="10"
                            Clicked="OnMuteClicked"
-                           HorizontalOptions="FillAndExpand"/>
+                           HorizontalOptions="Fill"/>
                     
                     <Button x:Name="UnmuteButton"
                            Text="🔇 Unmute"
@@ -96,7 +96,7 @@
                            TextColor="White"
                            CornerRadius="10"
                            Clicked="OnUnmuteClicked"
-                           HorizontalOptions="FillAndExpand"/>
+                           HorizontalOptions="Fill"/>
                 </HorizontalStackLayout>
                 
                 <Label x:Name="MuteStatusLabel"

@@ -27,12 +27,12 @@ public partial class AudioTestPage : ContentPage
         }
         catch (Exception ex)
         {
-            await DisplayAlert("Debug", $"Service-Load Error: {ex.Message}", "OK");
+            await DisplayAlertAsync("Debug", $"Service-Load Error: {ex.Message}", "OK");
         }
 
         if (_audioService == null)
         {
-            await DisplayAlert("Fehler", 
+            await DisplayAlertAsync("Fehler", 
                 "Audio-Service konnte nicht geladen werden.\n\n" +
                 "Moegliche Gruende:\n" +
                 "- Nur auf Android verfuegbar\n" +
@@ -44,7 +44,7 @@ public partial class AudioTestPage : ContentPage
 
         if (!await CheckPermissionsAsync())
         {
-            await DisplayAlert("Fehler", "Audio-Berechtigungen fehlen", "OK");
+            await DisplayAlertAsync("Fehler", "Audio-Berechtigungen fehlen", "OK");
             await Navigation.PopAsync();
         }
     }
@@ -65,7 +65,7 @@ public partial class AudioTestPage : ContentPage
         {
             if (_audioService == null)
             {
-                await DisplayAlert("Fehler", "Audio-Service nicht verfuegbar", "OK");
+                await DisplayAlertAsync("Fehler", "Audio-Service nicht verfuegbar", "OK");
                 return;
             }
 
@@ -83,7 +83,7 @@ public partial class AudioTestPage : ContentPage
         }
         catch (Exception ex)
         {
-            await DisplayAlert("Fehler", $"Recording-Start fehlgeschlagen: {ex.Message}", "OK");
+            await DisplayAlertAsync("Fehler", $"Recording-Start fehlgeschlagen: {ex.Message}", "OK");
         }
     }
 
@@ -105,12 +105,12 @@ public partial class AudioTestPage : ContentPage
             if (_recordedAudioChunks.Count > 0)
             {
                 PlayRecordingButton.IsEnabled = true;
-                await DisplayAlert("Info", $"{_recordedAudioChunks.Count} chunks recorded", "OK");
+                await DisplayAlertAsync("Info", $"{_recordedAudioChunks.Count} chunks recorded", "OK");
             }
         }
         catch (Exception ex)
         {
-            await DisplayAlert("Fehler", $"Recording-Stop fehlgeschlagen: {ex.Message}", "OK");
+            await DisplayAlertAsync("Fehler", $"Recording-Stop fehlgeschlagen: {ex.Message}", "OK");
         }
     }
 
@@ -133,7 +133,7 @@ public partial class AudioTestPage : ContentPage
         {
             if (_audioService == null || _recordedAudioChunks.Count == 0)
             {
-                await DisplayAlert("Fehler", "Keine Aufnahme vorhanden", "OK");
+                await DisplayAlertAsync("Fehler", "Keine Aufnahme vorhanden", "OK");
                 return;
             }
 
@@ -151,11 +151,11 @@ public partial class AudioTestPage : ContentPage
             int estimatedDurationMs = _recordedAudioChunks.Count * 64;
             await Task.Delay(estimatedDurationMs);
 
-            await DisplayAlert("Info", $"Playback complete ({_recordedAudioChunks.Count} chunks)", "OK");
+            await DisplayAlertAsync("Info", $"Playback complete ({_recordedAudioChunks.Count} chunks)", "OK");
         }
         catch (Exception ex)
         {
-            await DisplayAlert("Fehler", $"Playback fehlgeschlagen: {ex.Message}", "OK");
+            await DisplayAlertAsync("Fehler", $"Playback fehlgeschlagen: {ex.Message}", "OK");
         }
     }
 
