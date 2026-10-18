@@ -15,7 +15,16 @@ namespace WiRide
 
         protected override Window CreateWindow(IActivationState? activationState)
         {
-            return new Window(new AppShell());
+            var window = new Window(new AppShell());
+
+            // Widget/Mini-Fenster aktuell halten; Mini-Fenster nur, wenn die App im Hintergrund ist
+            var status = Services.ServiceHelper.Get<Services.StatusPublisher>();
+            window.Created += (_, _) => status.Start();
+            window.Stopped += (_, _) => status.SetAppInBackground(true);
+            window.Resumed += (_, _) => status.SetAppInBackground(false);
+            window.Activated += (_, _) => status.SetAppInBackground(false);
+
+            return window;
         }
     }
 }

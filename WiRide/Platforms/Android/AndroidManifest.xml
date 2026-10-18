@@ -19,6 +19,21 @@
 	<uses-permission android:name="android.permission.WAKE_LOCK" />
 	<uses-permission android:name="android.permission.BATTERY_STATS" />
 
+	<!-- Schwebendes Mini-Fenster -->
+	<uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
+	<!-- Feedback per E-Mail und Links oeffnen (Android 11+) -->
+	<queries>
+		<intent>
+			<action android:name="android.intent.action.SENDTO" />
+			<data android:scheme="mailto" />
+		</intent>
+		<intent>
+			<action android:name="android.intent.action.VIEW" />
+			<data android:scheme="https" />
+		</intent>
+	</queries>
+
 	<!-- WiFi Hotspot Erlaubnis (Android 13+) -->
 	<uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES" />
 

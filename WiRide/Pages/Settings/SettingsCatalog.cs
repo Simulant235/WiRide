@@ -55,6 +55,21 @@ public static class SettingsCatalog
                 Audio.Volume = (float)v;
             }
         };
+        yield return new ActionSetting
+        {
+            TitleKey = "SetMicTest",
+            DescriptionKey = "SetMicTestDesc",
+            Icon = Icons.Mic,
+            Run = page => page.Navigation.PushAsync(new MicTestPage())
+        };
+        yield return new ToggleSetting
+        {
+            TitleKey = "SetHeadsetWarning",
+            DescriptionKey = "SetHeadsetWarningDesc",
+            Icon = Icons.Headset,
+            Get = () => AppSettings.HeadsetWarning,
+            Set = v => AppSettings.HeadsetWarning = v
+        };
         yield return new ToggleSliderSetting
         {
             TitleKey = "SetSpeedVolume",
@@ -232,6 +247,31 @@ public static class SettingsCatalog
 
     private static IEnumerable<SettingItem> Appearance()
     {
+        yield return new ToggleSetting
+        {
+            TitleKey = "SetOverlay",
+            DescriptionKey = "SetOverlayDesc",
+            Icon = Icons.Group,
+            Get = () => AppSettings.OverlayEnabled,
+            Set = v => AppSettings.OverlayEnabled = v,
+            AfterChange = async page =>
+            {
+#if ANDROID
+                if (AppSettings.OverlayEnabled && !Platforms.Android.Services.AndroidStatusSurface.CanDrawOverlays &&
+                    await page.DisplayAlertAsync(Loc.T("SetOverlay"), Loc.T("OverlayPermission"), Loc.T("Open"), Loc.T("Cancel")))
+                    Platforms.Android.Services.AndroidStatusSurface.RequestOverlayPermission();
+#else
+                await Task.CompletedTask;
+#endif
+            }
+        };
+        yield return new InfoSetting
+        {
+            TitleKey = "SetWidget",
+            DescriptionKey = "SetWidgetDesc",
+            Icon = Icons.Info,
+            Value = () => string.Empty
+        };
         yield return new ChoiceSetting
         {
             TitleKey = "SetTheme",
@@ -379,6 +419,19 @@ public static class SettingsCatalog
             TitleKey = "SetVersion",
             Icon = Icons.Info,
             Value = () => AppInfo.Current.VersionString
+        };
+        yield return new ActionSetting
+        {
+            TitleKey = "SetFeedback",
+            DescriptionKey = "SetFeedbackDesc",
+            Icon = Icons.Edit,
+            Run = page => page.Navigation.PushAsync(new FeedbackPage())
+        };
+        yield return new ActionSetting
+        {
+            TitleKey = "SetOnboarding",
+            Icon = Icons.Info,
+            Run = page => page.Navigation.PushModalAsync(new OnboardingPage())
         };
         yield return new ActionSetting
         {

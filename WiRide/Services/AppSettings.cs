@@ -243,6 +243,42 @@ public static class AppSettings
         set => Preferences.Set(nameof(SpeedVolumeStrength), Math.Clamp(value, 0, 1));
     }
 
+    // ---- Extras ----
+
+    public static bool OnboardingDone
+    {
+        get => Preferences.Get(nameof(OnboardingDone), false);
+        set => Preferences.Set(nameof(OnboardingDone), value);
+    }
+
+    // Zufaellige App-ID fuer Feedback (keine echte Geraete-ID)
+    public static string InstallId
+    {
+        get
+        {
+            var id = Preferences.Get(nameof(InstallId), string.Empty);
+            if (id.Length == 0)
+            {
+                id = Guid.NewGuid().ToString("N")[..12];
+                Preferences.Set(nameof(InstallId), id);
+            }
+            return id;
+        }
+    }
+
+    // Schwebendes Mini-Fenster mit Rider-Infos, wenn die App im Hintergrund ist
+    public static bool OverlayEnabled
+    {
+        get => Preferences.Get(nameof(OverlayEnabled), false);
+        set => Preferences.Set(nameof(OverlayEnabled), value);
+    }
+
+    public static bool HeadsetWarning
+    {
+        get => Preferences.Get(nameof(HeadsetWarning), true);
+        set => Preferences.Set(nameof(HeadsetWarning), value);
+    }
+
     public static PasswordCharset PasswordCharset
     {
         get => (PasswordCharset)Preferences.Get(nameof(PasswordCharset), (int)PasswordCharset.LettersAndDigits);
@@ -253,8 +289,11 @@ public static class AppSettings
     public static void Reset()
     {
         var name = RiderName;
+        var installId = InstallId;
         Preferences.Clear();
         RiderName = name;
+        Preferences.Set(nameof(InstallId), installId);
+        OnboardingDone = true;
     }
 
     public static string LastHostIp

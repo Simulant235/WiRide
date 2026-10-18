@@ -55,4 +55,16 @@ public static class PermissionHelper
 
         return true;
     }
+
+    // Warnt, wenn kein Headset verbunden ist (Rueckkopplung ueber Lautsprecher). false = abbrechen
+    public static async Task<bool> ConfirmHeadsetAsync(Page page)
+    {
+        if (!AppSettings.HeadsetWarning)
+            return true;
+
+        if (ServiceHelper.Get<IAudioService>().IsHeadsetConnected != false)
+            return true;
+
+        return await page.DisplayAlertAsync(Loc.T("HeadsetTitle"), Loc.T("HeadsetText"), Loc.T("HeadsetContinue"), Loc.T("Cancel"));
+    }
 }
