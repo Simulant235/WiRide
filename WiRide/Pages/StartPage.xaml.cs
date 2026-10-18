@@ -1,3 +1,5 @@
+using WiRide.Services;
+
 namespace WiRide.Pages;
 
 public partial class StartPage : ContentPage
@@ -9,6 +11,12 @@ public partial class StartPage : ContentPage
 #if DEBUG
         AudioTestButton.IsVisible = true;
 #endif
+    }
+
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+        GreetingLabel.Text = $"Hallo {AppSettings.RiderName} 👋";
     }
 
     private async void OnHostButtonClicked(object? sender, EventArgs e)

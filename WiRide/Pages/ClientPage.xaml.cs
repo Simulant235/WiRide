@@ -5,12 +5,10 @@ namespace WiRide.Pages;
 
 public partial class ClientPage : ContentPage
 {
-    private const string PickWifiOption = "WiRide-WLAN waehlen";
-    private const string ManualIpOption = "Host-IP manuell eingeben";
-
     private readonly IntercomService _intercom;
     private readonly IWiFiService _wifi;
     private bool _busy;
+    private bool _permissionsChecked;
 
     public ClientPage()
     {
@@ -18,40 +16,92 @@ public partial class ClientPage : ContentPage
 
         _intercom = ServiceHelper.Get<IntercomService>();
         _wifi = ServiceHelper.Get<IWiFiService>();
-        Loaded += OnPageLoaded;
     }
 
-    private async void OnPageLoaded(object? sender, EventArgs e)
-    {
-        if (!await PermissionHelper.CheckAndRequestAsync(this))
-        {
-            NetworkStatusLabel.Text = "Berechtigungen verweigert";
-            HostNameLabel.Text = "Bitte Berechtigungen in Einstellungen aktivieren";
-            ConnectButton.IsEnabled = false;
-            return;
-        }
+    private bool InSession => _intercom.Role == IntercomRole.Client;
 
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
         _intercom.StateChanged += OnIntercomStateChanged;
         UpdateUi();
     }
 
-    private async void OnConnectButtonClicked(object? sender, EventArgs e)
+    protected override void OnDisappearing()
     {
-        if (_busy)
+        base.OnDisappearing();
+        _intercom.StateChanged -= OnIntercomStateChanged;
+    }
+
+    private void OnIntercomStateChanged(object? sender, EventArgs e) =>
+        MainThread.BeginInvokeOnMainThread(UpdateUi);
+
+    // ---------------- Verbindungswege ----------------
+
+    private async void OnScanQrClicked(object? sender, EventArgs e) => await RunBusyAsync(async () =>
+    {
+        var credentials = await QrScanPage.ScanAsync(this);
+        if (credentials != null)
+            await JoinWifiAndConnectAsync(credentials.Ssid, credentials.Password);
+    });
+
+    private async void OnSearchClicked(object? sender, EventArgs e) => await RunBusyAsync(async () =>
+    {
+        var host = await DiscoverAsync();
+        if (host == null)
+        {
+            await DisplayAlertAsync("Kein Host gefunden",
+                "Bist du im WLAN des Hosts? Am einfachsten geht es per QR-Code.", "OK");
+            return;
+        }
+
+        await ConnectToHostAsync(host);
+    });
+
+    private async void OnPickWifiClicked(object? sender, EventArgs e) => await RunBusyAsync(async () =>
+    {
+        var ssid = await NetworkSelectionPage.PickAsync(Navigation);
+        if (ssid == null)
             return;
 
+        var password = await DisplayPromptAsync(ssid, "WLAN-Passwort (steht auf dem Host-Handy):",
+            "Verbinden", "Abbrechen");
+        if (password != null)
+            await JoinWifiAndConnectAsync(ssid, password);
+    });
+
+    private async void OnManualIpTapped(object? sender, TappedEventArgs e) => await RunBusyAsync(async () =>
+    {
+        var ip = await DisplayPromptAsync("Host-IP",
+            "IP-Adresse des Hosts (steht auf dem Host-Handy):",
+            "Verbinden", "Abbrechen",
+            placeholder: "192.168.49.1",
+            initialValue: AppSettings.LastHostIp,
+            keyboard: Keyboard.Numeric);
+
+        if (!string.IsNullOrWhiteSpace(ip))
+            await ConnectToHostAsync(new DiscoveredHost { Name = ip.Trim(), IpAddress = ip.Trim() });
+    });
+
+    private async Task RunBusyAsync(Func<Task> action)
+    {
+        if (_busy || InSession)
+            return;
+
+        if (!_permissionsChecked)
+        {
+            if (!await PermissionHelper.CheckAndRequestAsync(this))
+                return;
+            _permissionsChecked = true;
+        }
+
         _busy = true;
-        ConnectButton.IsEnabled = false;
+        BusyIndicator.IsVisible = BusyIndicator.IsRunning = true;
+        ConnectSection.IsEnabled = false;
 
         try
         {
-            var host = await FindHostAsync();
-            if (host == null)
-                return;
-
-            NetworkStatusLabel.Text = $"Verbinde mit {host.Name}...";
-            if (!await _intercom.StartClientAsync(host.IpAddress))
-                await DisplayAlertAsync("Verbindung", $"Host {host.IpAddress} antwortet nicht.", "OK");
+            await action();
         }
         catch (Exception ex)
         {
@@ -60,68 +110,41 @@ public partial class ClientPage : ContentPage
         finally
         {
             _busy = false;
-            ConnectButton.IsEnabled = true;
+            BusyIndicator.IsVisible = BusyIndicator.IsRunning = false;
+            ConnectSection.IsEnabled = true;
             UpdateUi();
         }
     }
 
-    // 1. Host im aktuellen WLAN suchen  2. WiRide-WLAN waehlen  3. IP manuell
-    private async Task<DiscoveredHost?> FindHostAsync()
+    private async Task JoinWifiAndConnectAsync(string ssid, string password)
     {
-        var host = await DiscoverAsync();
-        if (host != null)
-            return host;
-
-        var choice = await DisplayActionSheetAsync("Kein Host im aktuellen WLAN gefunden", "Abbrechen", null,
-            PickWifiOption, ManualIpOption);
-
-        if (choice == PickWifiOption)
+        if (_wifi.CurrentNetworkSsid != ssid)
         {
-            var ssid = await NetworkSelectionPage.PickAsync(Navigation);
-            if (ssid == null)
-                return null;
-
-            var password = await DisplayPromptAsync(ssid, "WLAN-Passwort (wird auf dem Host angezeigt):",
-                "Verbinden", "Abbrechen");
-            if (password == null)
-                return null;
-
-            NetworkStatusLabel.Text = $"Verbinde mit WLAN {ssid}...";
+            SetStatus("Verbinde mit WLAN...", ssid);
             if (!await _wifi.ConnectToNetworkAsync(ssid, password))
             {
-                await DisplayAlertAsync("WLAN", $"Verbindung mit {ssid} fehlgeschlagen.", "OK");
-                return null;
+                await DisplayAlertAsync("WLAN", $"Verbindung mit „{ssid}“ fehlgeschlagen. Stimmt das Passwort?", "OK");
+                return;
             }
-
-            host = await DiscoverAsync();
-
-            // Fallback: beim Hotspot ist der Host fast immer das Gateway
-            var gateway = _wifi.GatewayIp;
-            if (host == null && gateway != null)
-                host = new DiscoveredHost { Name = gateway, IpAddress = gateway };
-
-            return host;
         }
 
-        if (choice == ManualIpOption)
+        // Host suchen, sonst ist beim Hotspot fast immer das Gateway der Host
+        var host = await DiscoverAsync();
+        if (host == null && _wifi.GatewayIp is { } gateway)
+            host = new DiscoveredHost { Name = gateway, IpAddress = gateway };
+
+        if (host == null)
         {
-            var ip = await DisplayPromptAsync("Host-IP",
-                "Host-IP eingeben (wird auf der Host-Seite angezeigt):",
-                "Verbinden", "Abbrechen",
-                placeholder: "192.168.43.1",
-                initialValue: AppSettings.LastHostIp,
-                keyboard: Keyboard.Numeric);
-
-            if (!string.IsNullOrWhiteSpace(ip))
-                return new DiscoveredHost { Name = ip.Trim(), IpAddress = ip.Trim() };
+            await DisplayAlertAsync("Kein Host gefunden", "Im WLAN wurde kein WiRide-Host gefunden. Läuft die Gruppe auf dem Host?", "OK");
+            return;
         }
 
-        return null;
+        await ConnectToHostAsync(host);
     }
 
     private async Task<DiscoveredHost?> DiscoverAsync()
     {
-        NetworkStatusLabel.Text = "Suche Host...";
+        SetStatus("Suche Host...", "Das dauert nur ein paar Sekunden.");
 
         var extraTargets = new List<string>();
         if (_wifi.GatewayIp is { } gateway)
@@ -130,52 +153,76 @@ public partial class ClientPage : ContentPage
             extraTargets.Add(AppSettings.LastHostIp);
 
         var hosts = await _intercom.Network.DiscoverHostsAsync(AppSettings.Port, extraTargets);
-
         if (hosts.Count <= 1)
             return hosts.FirstOrDefault();
 
-        var choice = await DisplayActionSheetAsync("Host waehlen", "Abbrechen", null,
+        var choice = await DisplayActionSheetAsync("Host wählen", "Abbrechen", null,
             hosts.Select(h => $"{h.Name} ({h.IpAddress})").ToArray());
         return hosts.FirstOrDefault(h => choice == $"{h.Name} ({h.IpAddress})");
     }
 
-    private void OnIntercomStateChanged(object? sender, EventArgs e) =>
-        MainThread.BeginInvokeOnMainThread(UpdateUi);
+    private async Task ConnectToHostAsync(DiscoveredHost host)
+    {
+        SetStatus($"Verbinde mit {host.Name}...", host.IpAddress);
+        if (!await _intercom.StartClientAsync(host.IpAddress))
+            await DisplayAlertAsync("Verbindung", $"Host {host.IpAddress} antwortet nicht.", "OK");
+    }
+
+    // ---------------- Anzeige ----------------
+
+    private void SetStatus(string status, string detail)
+    {
+        StatusLabel.Text = status;
+        DetailLabel.Text = detail;
+    }
 
     private void UpdateUi()
     {
         var network = _intercom.Network;
-        bool inSession = _intercom.Role == IntercomRole.Client;
+        bool inSession = InSession;
+        var resources = Application.Current!.Resources;
 
-        ConnectionSection.IsVisible = !inSession;
+        ConnectSection.IsVisible = !inSession;
+        MuteSection.IsVisible = inSession;
         DisconnectButton.IsVisible = inSession;
-        MuteIcon.Text = _intercom.IsMuted ? "🔇" : "🎤";
 
         if (!inSession)
         {
-            HostNameLabel.Text = "Nicht verbunden";
-            NetworkStatusLabel.Text = "Not Connected";
-            LatencyLabel.Text = "Latency: -";
+            StatusDot.Fill = (Color)resources["WrTextMuted"];
+            if (!_busy)
+                SetStatus("Nicht verbunden", "Scanne den QR-Code auf dem Host-Handy, das ist der schnellste Weg.");
             return;
         }
 
-        HostNameLabel.Text = $"of {network.HostName ?? network.HostIp}";
         if (network.IsConnected)
         {
-            NetworkStatusLabel.Text = $"Verbunden mit {network.HostIp}";
-            LatencyLabel.Text = $"Latency: {network.LatencyMs} ms";
+            StatusDot.Fill = (Color)resources["WrSuccess"];
+            SetStatus($"Verbunden mit {network.HostName ?? network.HostIp}",
+                network.LatencyMs > 0 ? $"Netzwerk-Ping {network.LatencyMs} ms" : "Verbindung steht");
         }
         else
         {
-            NetworkStatusLabel.Text = "Verbindung verloren - verbinde neu...";
-            LatencyLabel.Text = "Latency: -";
+            StatusDot.Fill = (Color)resources["WrAccent"];
+            SetStatus("Verbindung verloren", "Verbinde automatisch neu...");
         }
+
+        UpdateMuteUi();
+    }
+
+    private void UpdateMuteUi()
+    {
+        bool isMuted = _intercom.IsMuted;
+        var resources = Application.Current!.Resources;
+        MuteIcon.Text = isMuted ? Icons.MicOff : Icons.Mic;
+        MuteLabel.Text = isMuted ? "Stumm · tippen zum Sprechen" : "Mikrofon an · tippen zum Stummschalten";
+        MuteCircle.BackgroundColor = (Color)resources[isMuted ? "WrSurfaceHigh" : "WrAccent"];
+        MuteIcon.TextColor = (Color)resources[isMuted ? "WrText" : "WrOnAccent"];
     }
 
     private void OnMuteToggled(object? sender, EventArgs e)
     {
         _intercom.IsMuted = !_intercom.IsMuted;
-        MuteIcon.Text = _intercom.IsMuted ? "🔇" : "🎤";
+        UpdateMuteUi();
     }
 
     private async void OnSettingsClicked(object? sender, EventArgs e)
@@ -189,16 +236,24 @@ public partial class ClientPage : ContentPage
         UpdateUi();
     }
 
-    // Nur beim Zurueck-Navigieren stoppen (nicht beim Oeffnen einer weiteren Seite)
-    protected override async void OnNavigatedFrom(NavigatedFromEventArgs args)
+    private async void OnBackClicked(object? sender, EventArgs e) => await LeaveAsync();
+
+    protected override bool OnBackButtonPressed()
     {
-        base.OnNavigatedFrom(args);
+        Dispatcher.Dispatch(async () => await LeaveAsync());
+        return true;
+    }
 
-        if (args.NavigationType != NavigationType.Pop)
-            return;
+    private async Task LeaveAsync()
+    {
+        if (InSession)
+        {
+            if (!await DisplayAlertAsync("Gruppe verlassen?", "Die Verbindung zum Host wird getrennt.", "Verlassen", "Abbrechen"))
+                return;
 
-        _intercom.StateChanged -= OnIntercomStateChanged;
-        await _intercom.StopAsync();
-        await _wifi.DisconnectFromNetworkAsync();
+            await _intercom.StopAsync();
+        }
+
+        await Navigation.PopAsync();
     }
 }

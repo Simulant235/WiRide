@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:app="clr-namespace:WiRide"
+             x:Class="WiRide.Pages.HotspotSetupPage"
+             Style="{StaticResource WrPage}">
+
+    <Grid RowDefinitions="Auto,*,Auto" Padding="20,16">
+
+        <!-- Kopfzeile -->
+        <Grid ColumnDefinitions="*,Auto" Margin="0,8,0,16">
+            <Label Text="Netzwerk für die Gruppe" Style="{StaticResource WrTitle}" />
+            <Button Grid.Column="1" Text="{x:Static app:Icons.Close}" Style="{StaticResource WrIconButton}" Clicked="OnCancelClicked" />
+        </Grid>
+
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Spacing="14">
+
+                <!-- Option: Automatisch -->
+                <Border x:Name="AutoCard" Style="{StaticResource WrCard}" StrokeThickness="2">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnAutoTapped" />
+                    </Border.GestureRecognizers>
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                        <Border Style="{StaticResource WrIconCircle}" BackgroundColor="{StaticResource WrAccentSoft}">
+                            <Label Text="{x:Static app:Icons.WifiTethering}" Style="{StaticResource WrIcon}" TextColor="{StaticResource WrAccent}" />
+                        </Border>
+                        <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                            <Label Text="Automatisch (empfohlen)" Style="{StaticResource WrBody}" FontAttributes="Bold" />
+                            <Label Text="WiRide erstellt das WLAN, du legst das Passwort fest." Style="{StaticResource WrCaption}" />
+                        </VerticalStackLayout>
+                    </Grid>
+                </Border>
+
+                <!-- Option: Eigener Hotspot -->
+                <Border x:Name="ManualCard" Style="{StaticResource WrCard}" StrokeThickness="2">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnManualTapped" />
+                    </Border.GestureRecognizers>
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                        <Border Style="{StaticResource WrIconCircle}" BackgroundColor="{StaticResource WrSurfaceHigh}">
+                            <Label Text="{x:Static app:Icons.Router}" Style="{StaticResource WrIcon}" />
+                        </Border>
+                        <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                            <Label Text="Eigener Hotspot" Style="{StaticResource WrBody}" FontAttributes="Bold" />
+                            <Label Text="Du schaltest den Handy-Hotspot selbst in den Android-Einstellungen ein." Style="{StaticResource WrCaption}" />
+                        </VerticalStackLayout>
+                    </Grid>
+                </Border>
+
+                <!-- Passwort (nur Automatisch) -->
+                <VerticalStackLayout x:Name="PasswordSection" Spacing="8" Margin="0,8,0,0">
+                    <Label Text="WLAN-Passwort" Style="{StaticResource WrSectionTitle}" />
+                    <Border Style="{StaticResource WrCard}" Padding="14,6">
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                            <Label Text="{x:Static app:Icons.Lock}" Style="{StaticResource WrIcon}" FontSize="22" TextColor="{StaticResource WrTextMuted}" />
+                            <Entry x:Name="PasswordEntry"
+                                   Grid.Column="1"
+                                   Style="{StaticResource WrEntry}"
+                                   BackgroundColor="Transparent"
+                                   FontSize="20"
+                                   CharacterSpacing="2"
+                                   MaxLength="63"
+                                   IsSpellCheckEnabled="False"
+                                   IsTextPredictionEnabled="False"
+                                   TextChanged="OnPasswordChanged" />
+                            <Button Grid.Column="2" Text="{x:Static app:Icons.Autorenew}" Style="{StaticResource WrIconButton}" Clicked="OnRegenerateClicked" />
+                        </Grid>
+                    </Border>
+                    <Label x:Name="PasswordHint" Style="{StaticResource WrCaption}" Margin="4,0" />
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <Button x:Name="StartButton"
+                Grid.Row="2"
+                Text="Gruppe starten"
+                Style="{StaticResource WrPrimaryButton}"
+                Clicked="OnStartClicked"
+                Margin="0,12,0,8" />
+    </Grid>
+</ContentPage>

@@ -60,6 +60,7 @@ public partial class NetworkSelectionPage : ContentPage
     }
 
     private static bool IsLikelyWiRideNetwork(string ssid) =>
+        ssid.StartsWith("DIRECT-WR", StringComparison.OrdinalIgnoreCase) ||
         ssid.StartsWith("WiRide", StringComparison.OrdinalIgnoreCase) ||
         ssid.StartsWith("AndroidShare", StringComparison.OrdinalIgnoreCase) ||
         ssid.StartsWith("DIRECT-", StringComparison.OrdinalIgnoreCase);

@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using WiRide.Services;
 using WiRide.Pages;
+using ZXing.Net.Maui.Controls;
 
 #if ANDROID
 using WiRide.Platforms.Android.Services;
@@ -15,10 +16,12 @@ namespace WiRide
             var builder = MauiApp.CreateBuilder();
             builder
                 .UseMauiApp<App>()
+                .UseBarcodeReader()
                 .ConfigureFonts(fonts =>
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                     fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+                    fonts.AddFont("MaterialIcons-Regular.ttf", "Icons");
                 });
 
             // Seiten registrieren
@@ -78,7 +81,8 @@ namespace WiRide
         public bool IsConnectedToWiFi => true;
         public string? CurrentNetworkSsid => null;
         public string? GatewayIp => null;
-        public Task<HotspotInfo?> StartHotspotAsync() => Task.FromResult<HotspotInfo?>(null);
+        public string? LastError => "Nur auf Android verfuegbar";
+        public Task<HotspotInfo?> StartHotspotAsync(string password) => Task.FromResult<HotspotInfo?>(null);
         public Task StopHotspotAsync() => Task.CompletedTask;
         public void OpenHotspotSettings() { }
         public Task<bool> ConnectToNetworkAsync(string ssid, string password) => Task.FromResult(false);

@@ -57,6 +57,20 @@ public static class AppSettings
         set => Preferences.Set(nameof(UseOpus), value);
     }
 
+    public static PasswordCharset PasswordCharset
+    {
+        get => (PasswordCharset)Preferences.Get(nameof(PasswordCharset), (int)PasswordCharset.LettersAndDigits);
+        set => Preferences.Set(nameof(PasswordCharset), (int)value);
+    }
+
+    // Alle Einstellungen auf Standard zuruecksetzen (Rider-Name bleibt)
+    public static void Reset()
+    {
+        var name = RiderName;
+        Preferences.Clear();
+        RiderName = name;
+    }
+
     public static string LastHostIp
     {
         get => Preferences.Get(nameof(LastHostIp), string.Empty);

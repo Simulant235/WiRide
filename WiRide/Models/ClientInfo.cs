@@ -14,7 +14,7 @@ public class ClientInfo
     // Absender-Adresse inkl. Port (Clients nutzen zufaellige lokale Ports)
     public IPEndPoint? EndPoint { get; set; }
 
-    public string DisplayText => LatencyMs > 0 ? $"{ClientName} ({LatencyMs} ms)" : ClientName;
+    public string LatencyText => LatencyMs > 0 ? $"{LatencyMs} ms" : "verbunden";
 }
 
 public class DiscoveredHost

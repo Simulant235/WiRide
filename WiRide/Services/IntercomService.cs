@@ -24,10 +24,12 @@ public class IntercomService
     private readonly IAudioService _audio;
     private readonly AudioMixerService _mixer;
     private readonly AudioCodecService _codec;
+    private readonly IWiFiService _wifi;
     private CancellationTokenSource? _mixCts;
 
-    public IntercomService(INetworkService network, IAudioService audio, AudioMixerService mixer, AudioCodecService codec)
+    public IntercomService(INetworkService network, IAudioService audio, AudioMixerService mixer, AudioCodecService codec, IWiFiService wifi)
     {
+        _wifi = wifi;
         _network = network;
         _audio = audio;
         _mixer = mixer;
@@ -51,10 +53,19 @@ public class IntercomService
 
         _mixer.Clear();
         _codec.Clear();
-        await _network.StartHostAsync(AppSettings.Port);
-        Subscribe();
         Role = IntercomRole.Host;
-        await StartAudioAsync();
+
+        try
+        {
+            await _network.StartHostAsync(AppSettings.Port);
+            Subscribe();
+            await StartAudioAsync();
+        }
+        catch
+        {
+            await StopAsync();
+            throw;
+        }
 
         _mixCts = new CancellationTokenSource();
         _ = Task.Run(() => MixLoopAsync(_mixCts.Token));
@@ -84,7 +95,10 @@ public class IntercomService
     public async Task StopAsync()
     {
         if (Role == IntercomRole.None)
+        {
+            StopBackgroundMode();
             return;
+        }
 
         _mixCts?.Cancel();
         _mixCts = null;
@@ -94,9 +108,15 @@ public class IntercomService
         await _audio.StopPlaybackAsync();
 
         if (Role == IntercomRole.Host)
+        {
             await _network.StopHostAsync();
+            await _wifi.StopHotspotAsync();
+        }
         else
+        {
             await _network.DisconnectAsync();
+            await _wifi.DisconnectFromNetworkAsync();
+        }
 
         _mixer.Clear();
         StopBackgroundMode();

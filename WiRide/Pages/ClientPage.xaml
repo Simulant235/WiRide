@@ -1,102 +1,99 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:app="clr-namespace:WiRide"
              x:Class="WiRide.Pages.ClientPage"
-             BackgroundColor="#6C6C70"
-             NavigationPage.HasNavigationBar="False">
+             Style="{StaticResource WrPage}">
 
-    <Grid RowDefinitions="Auto,*,Auto" Padding="20">
-        
-        <ImageButton Grid.Row="0"
-                    Source="settings_icon.png"
-                    WidthRequest="40"
-                    HeightRequest="40"
-                    HorizontalOptions="End"
-                    VerticalOptions="Start"
-                    BackgroundColor="Transparent"
-                    Clicked="OnSettingsClicked"
-                    Margin="0,20,0,0"/>
+    <Grid RowDefinitions="Auto,*,Auto" Padding="20,16">
 
-        <VerticalStackLayout Grid.Row="1"
-                            Spacing="40" 
-                            VerticalOptions="Center">
-            
-            <VerticalStackLayout Spacing="5">
-                <Label x:Name="StatusLabel"
-                       Text="You are Client"
-                       FontSize="32"
-                       FontAttributes="Bold"
-                       TextColor="#30D158"
-                       HorizontalOptions="Center"/>
-                <Label x:Name="HostNameLabel"
-                       Text="of {{Host}}"
-                       FontSize="18"
-                       TextColor="White"
-                       HorizontalOptions="Center"/>
+        <!-- Kopfzeile -->
+        <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10" Margin="0,8,0,16">
+            <Button Text="{x:Static app:Icons.ArrowBack}" Style="{StaticResource WrIconButton}" Clicked="OnBackClicked" />
+            <Label Grid.Column="1" Text="Gruppe beitreten" Style="{StaticResource WrTitle}" />
+            <Button Grid.Column="2" Text="{x:Static app:Icons.QrScanner}" Style="{StaticResource WrIconButton}" Clicked="OnScanQrClicked" />
+            <Button Grid.Column="3" Text="{x:Static app:Icons.Settings}" Style="{StaticResource WrIconButton}" Clicked="OnSettingsClicked" />
+        </Grid>
+
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Spacing="16">
+
+                <!-- Status -->
+                <Border Style="{StaticResource WrCard}">
+                    <VerticalStackLayout Spacing="6">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                            <Ellipse x:Name="StatusDot" WidthRequest="12" HeightRequest="12" Fill="{StaticResource WrTextMuted}" VerticalOptions="Center" />
+                            <Label x:Name="StatusLabel" Grid.Column="1" Text="Nicht verbunden" Style="{StaticResource WrBody}" FontAttributes="Bold" />
+                        </Grid>
+                        <Label x:Name="DetailLabel" Text="Scanne den QR-Code auf dem Host-Handy, das ist der schnellste Weg." Style="{StaticResource WrCaption}" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Verbinden -->
+                <VerticalStackLayout x:Name="ConnectSection" Spacing="12">
+                    <Button Text="Per QR-Code beitreten"
+                            Style="{StaticResource WrPrimaryButton}"
+                            ContentLayout="Left,10"
+                            Clicked="OnScanQrClicked">
+                        <Button.ImageSource>
+                            <FontImageSource FontFamily="Icons" Glyph="{x:Static app:Icons.Camera}" Color="{StaticResource WrOnAccent}" Size="22" />
+                        </Button.ImageSource>
+                    </Button>
+                    <Button Text="Host im aktuellen WLAN suchen"
+                            Style="{StaticResource WrSecondaryButton}"
+                            ContentLayout="Left,10"
+                            Clicked="OnSearchClicked">
+                        <Button.ImageSource>
+                            <FontImageSource FontFamily="Icons" Glyph="{x:Static app:Icons.WifiFind}" Color="{StaticResource WrText}" Size="22" />
+                        </Button.ImageSource>
+                    </Button>
+                    <Button Text="WLAN aus Liste wählen"
+                            Style="{StaticResource WrSecondaryButton}"
+                            ContentLayout="Left,10"
+                            Clicked="OnPickWifiClicked">
+                        <Button.ImageSource>
+                            <FontImageSource FontFamily="Icons" Glyph="{x:Static app:Icons.Wifi}" Color="{StaticResource WrText}" Size="22" />
+                        </Button.ImageSource>
+                    </Button>
+                    <Label Text="Host-IP manuell eingeben"
+                           Style="{StaticResource WrCaption}"
+                           TextDecorations="Underline"
+                           HorizontalOptions="Center"
+                           Padding="10">
+                        <Label.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnManualIpTapped" />
+                        </Label.GestureRecognizers>
+                    </Label>
+                    <ActivityIndicator x:Name="BusyIndicator" Color="{StaticResource WrAccent}" IsVisible="False" IsRunning="False" />
+                </VerticalStackLayout>
+
+                <!-- Mikrofon -->
+                <VerticalStackLayout x:Name="MuteSection" Spacing="8" IsVisible="False" Margin="0,24">
+                    <Border x:Name="MuteCircle"
+                            WidthRequest="150"
+                            HeightRequest="150"
+                            StrokeThickness="0"
+                            HorizontalOptions="Center"
+                            BackgroundColor="{StaticResource WrAccent}">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="75" />
+                        </Border.StrokeShape>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnMuteToggled" />
+                        </Border.GestureRecognizers>
+                        <Label x:Name="MuteIcon" Text="{x:Static app:Icons.Mic}" Style="{StaticResource WrIcon}" FontSize="68" TextColor="{StaticResource WrOnAccent}" />
+                    </Border>
+                    <Label x:Name="MuteLabel" Style="{StaticResource WrCaption}" HorizontalTextAlignment="Center" />
+                </VerticalStackLayout>
             </VerticalStackLayout>
+        </ScrollView>
 
-            <VerticalStackLayout x:Name="ConnectionSection"
-                                Spacing="15"
-                                IsVisible="True">
-                <Label Text="Not Connected"
-                       FontSize="18"
-                       TextColor="#8E8E93"
-                       HorizontalOptions="Center"/>
-
-                <Button x:Name="ConnectButton"
-                       Text="Connect to Network"
-                       BackgroundColor="#007AFF"
-                       TextColor="White"
-                       CornerRadius="15"
-                       Padding="30,15"
-                       FontSize="18"
-                       FontAttributes="Bold"
-                       Clicked="OnConnectButtonClicked"
-                       HorizontalOptions="Center"
-                       WidthRequest="280"/>
-            </VerticalStackLayout>
-
-            <Border BackgroundColor="White"
-                    StrokeThickness="0"
-                    WidthRequest="100"
-                    HeightRequest="100"
-                    HorizontalOptions="Center">
-                <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="20"/>
-                </Border.StrokeShape>
-                <Border.GestureRecognizers>
-                    <TapGestureRecognizer Tapped="OnMuteToggled"/>
-                </Border.GestureRecognizers>
-                
-                <Label x:Name="MuteIcon"
-                       Text="🎤"
-                       FontSize="50"
-                       HorizontalOptions="Center"
-                       VerticalOptions="Center"/>
-            </Border>
-        </VerticalStackLayout>
-
-        <VerticalStackLayout Grid.Row="2" Spacing="5" Margin="0,0,0,20">
-            <Label x:Name="NetworkStatusLabel"
-                   Text="Not Connected"
-                   FontSize="12"
-                   TextColor="White"
-                   HorizontalOptions="Center"/>
-            <Label x:Name="LatencyLabel"
-                   Text="Latency: -"
-                   FontSize="12"
-                   TextColor="#8E8E93"
-                   HorizontalOptions="Center"/>
-            <Button x:Name="DisconnectButton"
-                   Text="Disconnect"
-                   BackgroundColor="#FF3B30"
-                   TextColor="White"
-                   CornerRadius="10"
-                   Padding="20,10"
-                   Clicked="OnDisconnectClicked"
-                   HorizontalOptions="Center"
-                   IsVisible="False"/>
-        </VerticalStackLayout>
+        <Button x:Name="DisconnectButton"
+                Grid.Row="2"
+                Text="Verbindung trennen"
+                Style="{StaticResource WrDangerButton}"
+                Clicked="OnDisconnectClicked"
+                IsVisible="False"
+                Margin="0,12,0,8" />
     </Grid>
-
 </ContentPage>

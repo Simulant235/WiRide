@@ -1,82 +1,106 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:app="clr-namespace:WiRide"
              x:Class="WiRide.Pages.SettingsPage"
-             Title="Einstellungen"
-             BackgroundColor="#1C1C1E">
+             Style="{StaticResource WrPage}">
 
-    <ScrollView>
-        <VerticalStackLayout Padding="20" Spacing="18">
+    <Grid RowDefinitions="Auto,*" Padding="20,16">
 
-            <Label Text="Einstellungen"
-                   FontSize="28"
-                   FontAttributes="Bold"
-                   TextColor="White"
-                   Margin="0,20,0,10"/>
+        <!-- Kopfzeile -->
+        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12" Margin="0,8,0,12">
+            <Button Text="{x:Static app:Icons.ArrowBack}" Style="{StaticResource WrIconButton}" Clicked="OnBackClicked" />
+            <Label Grid.Column="1" Text="Einstellungen" Style="{StaticResource WrTitle}" />
+        </Grid>
 
-            <Label Text="Rider-Name" TextColor="#8E8E93" FontSize="14"/>
-            <Entry x:Name="NameEntry"
-                   TextColor="White"
-                   BackgroundColor="#3A3A3C"
-                   MaxLength="24"/>
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Spacing="10" Padding="0,0,0,24">
 
-            <Label Text="Lautstaerke" TextColor="#8E8E93" FontSize="14"/>
-            <Slider x:Name="VolumeSlider"
-                    Minimum="0"
-                    Maximum="1"
-                    MinimumTrackColor="#30D158"/>
+                <!-- Profil -->
+                <Label Text="Profil" Style="{StaticResource WrSectionTitle}" />
+                <Border Style="{StaticResource WrCard}">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Dein Name in der Gruppe" Style="{StaticResource WrCaption}" />
+                        <Entry x:Name="NameEntry" Style="{StaticResource WrEntry}" MaxLength="24" Placeholder="z.B. Max" Unfocused="OnNameUnfocused" />
+                    </VerticalStackLayout>
+                </Border>
 
-            <Grid ColumnDefinitions="*,Auto">
-                <Label Text="Automatisch neu verbinden"
-                       TextColor="White"
-                       VerticalOptions="Center"/>
-                <Switch x:Name="AutoReconnectSwitch" Grid.Column="1" OnColor="#30D158"/>
-            </Grid>
+                <!-- Audio -->
+                <Label Text="Audio" Style="{StaticResource WrSectionTitle}" />
+                <Border Style="{StaticResource WrCard}">
+                    <VerticalStackLayout Spacing="16">
+                        <VerticalStackLayout Spacing="4">
+                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                <Label Text="{x:Static app:Icons.Volume}" Style="{StaticResource WrIcon}" FontSize="22" TextColor="{StaticResource WrTextMuted}" />
+                                <Label Grid.Column="1" Text="Lautstärke" Style="{StaticResource WrBody}" />
+                                <Label x:Name="VolumeValueLabel" Grid.Column="2" Style="{StaticResource WrCaption}" VerticalOptions="Center" />
+                            </Grid>
+                            <Slider x:Name="VolumeSlider" Minimum="0" Maximum="1"
+                                    MinimumTrackColor="{StaticResource WrAccent}"
+                                    ThumbColor="{StaticResource WrAccent}"
+                                    ValueChanged="OnVolumeChanged" />
+                        </VerticalStackLayout>
 
-            <Label Text="Erweitert" TextColor="#FFD60A" FontSize="16" FontAttributes="Bold" Margin="0,10,0,0"/>
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                            <VerticalStackLayout>
+                                <Label Text="Opus-Kompression" Style="{StaticResource WrBody}" />
+                                <Label Text="Spart ca. 90 % Datenmenge, empfohlen" Style="{StaticResource WrCaption}" />
+                            </VerticalStackLayout>
+                            <Switch x:Name="OpusSwitch" Grid.Column="1" OnColor="{StaticResource WrAccent}" ThumbColor="White" Toggled="OnOpusToggled" />
+                        </Grid>
 
-            <Grid ColumnDefinitions="*,Auto">
-                <Label Text="Opus-Kompression (spart Bandbreite)"
-                       TextColor="White"
-                       VerticalOptions="Center"/>
-                <Switch x:Name="OpusSwitch" Grid.Column="1" OnColor="#30D158"/>
-            </Grid>
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="Audio-Qualität (Sample-Rate, auf allen Handys gleich)" Style="{StaticResource WrCaption}" />
+                            <Picker x:Name="SampleRatePicker" Style="{StaticResource WrPicker}" SelectedIndexChanged="OnSampleRateChanged" />
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </Border>
 
-            <Label Text="Server-Port (alle Geraete gleich)" TextColor="#8E8E93" FontSize="14"/>
-            <Entry x:Name="PortEntry"
-                   Keyboard="Numeric"
-                   TextColor="White"
-                   BackgroundColor="#3A3A3C"/>
+                <!-- Hotspot -->
+                <Label Text="Hotspot (Host)" Style="{StaticResource WrSectionTitle}" />
+                <Border Style="{StaticResource WrCard}">
+                    <VerticalStackLayout Spacing="12">
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="Zeichen für generierte Passwörter" Style="{StaticResource WrCaption}" />
+                            <Picker x:Name="CharsetPicker" Style="{StaticResource WrPicker}" SelectedIndexChanged="OnCharsetChanged" />
+                        </VerticalStackLayout>
+                        <Label x:Name="PasswordExampleLabel" Style="{StaticResource WrCaption}" />
+                        <Button Text="Android-Hotspot-Einstellungen öffnen" Style="{StaticResource WrSecondaryButton}" Clicked="OnOpenHotspotSettingsClicked" />
+                    </VerticalStackLayout>
+                </Border>
 
-            <Label Text="Audio-Sample-Rate (alle Geraete gleich)" TextColor="#8E8E93" FontSize="14"/>
-            <Picker x:Name="SampleRatePicker"
-                    TextColor="White"
-                    BackgroundColor="#3A3A3C"/>
+                <!-- Verbindung -->
+                <Label Text="Verbindung" Style="{StaticResource WrSectionTitle}" />
+                <Border Style="{StaticResource WrCard}">
+                    <VerticalStackLayout Spacing="16">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                            <VerticalStackLayout>
+                                <Label Text="Automatisch neu verbinden" Style="{StaticResource WrBody}" />
+                                <Label Text="Nach einem Funkloch verbindet sich der Client selbst" Style="{StaticResource WrCaption}" />
+                            </VerticalStackLayout>
+                            <Switch x:Name="AutoReconnectSwitch" Grid.Column="1" OnColor="{StaticResource WrAccent}" ThumbColor="White" Toggled="OnAutoReconnectToggled" />
+                        </Grid>
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="Port (auf allen Handys gleich, Standard 8888)" Style="{StaticResource WrCaption}" />
+                            <Entry x:Name="PortEntry" Style="{StaticResource WrEntry}" Keyboard="Numeric" MaxLength="5" Unfocused="OnPortUnfocused" />
+                        </VerticalStackLayout>
+                        <Label Text="Änderungen an Port, Qualität und Opus gelten ab der nächsten Verbindung." Style="{StaticResource WrCaption}" />
+                    </VerticalStackLayout>
+                </Border>
 
-            <Label x:Name="HintLabel"
-                   Text="Aenderungen an Port, Sample-Rate und Opus gelten ab der naechsten Verbindung."
-                   TextColor="#8E8E93"
-                   FontSize="12"/>
+                <!-- System -->
+                <Label Text="System" Style="{StaticResource WrSectionTitle}" />
+                <Border Style="{StaticResource WrCard}">
+                    <VerticalStackLayout Spacing="10">
+                        <Button Text="App-Berechtigungen öffnen" Style="{StaticResource WrSecondaryButton}" Clicked="OnOpenAppSettingsClicked" />
+                        <Button Text="Standort-Einstellungen öffnen" Style="{StaticResource WrSecondaryButton}" Clicked="OnOpenLocationSettingsClicked" />
+                        <Button Text="WLAN-Einstellungen öffnen" Style="{StaticResource WrSecondaryButton}" Clicked="OnOpenWifiSettingsClicked" />
+                        <Button Text="Auf Standard zurücksetzen" Style="{StaticResource WrSecondaryButton}" TextColor="{StaticResource WrDanger}" Clicked="OnResetClicked" />
+                    </VerticalStackLayout>
+                </Border>
 
-            <Button Text="Speichern"
-                    BackgroundColor="#30D158"
-                    TextColor="White"
-                    CornerRadius="10"
-                    Clicked="OnSaveClicked"
-                    Margin="0,10,0,0"/>
-
-            <Button Text="Abbrechen"
-                    BackgroundColor="#3A3A3C"
-                    TextColor="White"
-                    CornerRadius="10"
-                    Clicked="OnCancelClicked"/>
-
-            <Label x:Name="VersionLabel"
-                   TextColor="#8E8E93"
-                   FontSize="12"
-                   HorizontalOptions="Center"
-                   Margin="0,20,0,0"/>
-        </VerticalStackLayout>
-    </ScrollView>
-
+                <Label x:Name="VersionLabel" Style="{StaticResource WrCaption}" HorizontalOptions="Center" Margin="0,12,0,0" />
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
 </ContentPage>

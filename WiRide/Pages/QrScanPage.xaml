@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:app="clr-namespace:WiRide"
+             xmlns:zxing="clr-namespace:ZXing.Net.Maui.Controls;assembly=ZXing.Net.MAUI.Controls"
+             x:Class="WiRide.Pages.QrScanPage"
+             Style="{StaticResource WrPage}"
+             BackgroundColor="Black">
+
+    <Grid>
+        <zxing:CameraBarcodeReaderView x:Name="CameraView"
+                                       BarcodesDetected="OnBarcodesDetected" />
+
+        <!-- Sucher-Rahmen -->
+        <Border WidthRequest="260"
+                HeightRequest="260"
+                Stroke="{StaticResource WrAccent}"
+                StrokeThickness="4"
+                BackgroundColor="Transparent"
+                HorizontalOptions="Center"
+                VerticalOptions="Center"
+                InputTransparent="True">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="28" />
+            </Border.StrokeShape>
+        </Border>
+
+        <Grid RowDefinitions="Auto,*,Auto" Padding="20,16">
+            <Grid ColumnDefinitions="*,Auto" Margin="0,8,0,0">
+                <Label Text="QR-Code scannen" Style="{StaticResource WrTitle}" />
+                <Button Grid.Column="1" Text="{x:Static app:Icons.Close}" Style="{StaticResource WrIconButton}" Clicked="OnCloseClicked" />
+            </Grid>
+
+            <Border Grid.Row="2" Style="{StaticResource WrCard}" Margin="0,0,0,16">
+                <Label Text="Halte die Kamera auf den QR-Code auf dem Host-Handy."
+                       Style="{StaticResource WrBody}"
+                       HorizontalTextAlignment="Center" />
+            </Border>
+        </Grid>
+    </Grid>
+</ContentPage>

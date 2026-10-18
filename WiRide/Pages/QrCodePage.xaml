@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:app="clr-namespace:WiRide"
+             xmlns:zxing="clr-namespace:ZXing.Net.Maui.Controls;assembly=ZXing.Net.MAUI.Controls"
+             x:Class="WiRide.Pages.QrCodePage"
+             Style="{StaticResource WrPage}">
+
+    <Grid RowDefinitions="Auto,*" Padding="20,16">
+        <Grid ColumnDefinitions="*,Auto" Margin="0,8,0,16">
+            <Label Text="Gruppe beitreten" Style="{StaticResource WrTitle}" />
+            <Button Grid.Column="1" Text="{x:Static app:Icons.Close}" Style="{StaticResource WrIconButton}" Clicked="OnCloseClicked" />
+        </Grid>
+
+        <VerticalStackLayout Grid.Row="1" Spacing="20" VerticalOptions="Center">
+            <Border BackgroundColor="White" StrokeThickness="0" Padding="20" HorizontalOptions="Center">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="24" />
+                </Border.StrokeShape>
+                <zxing:BarcodeGeneratorView x:Name="QrView"
+                                            Format="QrCode"
+                                            ForegroundColor="Black"
+                                            BackgroundColor="White"
+                                            WidthRequest="260"
+                                            HeightRequest="260"
+                                            Margin="0" />
+            </Border>
+
+            <Label Text="In WiRide auf das Kamera-Symbol tippen oder mit der normalen Handy-Kamera scannen."
+                   Style="{StaticResource WrCaption}"
+                   HorizontalTextAlignment="Center"
+                   Margin="20,0" />
+
+            <Border Style="{StaticResource WrCard}">
+                <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="Auto,*" RowSpacing="12" ColumnSpacing="14">
+                    <Label Text="{x:Static app:Icons.Wifi}" Style="{StaticResource WrIcon}" FontSize="22" TextColor="{StaticResource WrTextMuted}" />
+                    <Label x:Name="SsidLabel" Grid.Column="1" Style="{StaticResource WrBody}" />
+                    <Label Grid.Row="1" Text="{x:Static app:Icons.Lock}" Style="{StaticResource WrIcon}" FontSize="22" TextColor="{StaticResource WrTextMuted}" />
+                    <Label x:Name="PasswordLabel" Grid.Row="1" Grid.Column="1" Style="{StaticResource WrBody}" FontAttributes="Bold" CharacterSpacing="2" />
+                </Grid>
+            </Border>
+        </VerticalStackLayout>
+    </Grid>
+</ContentPage>
