@@ -1,4 +1,5 @@
 using Android.Media;
+using Android.Media.Audiofx;
 using WiRide.Services;
 using System.Collections.Concurrent;
 
@@ -8,6 +9,7 @@ public class AndroidAudioService : IAudioService
 {
     private AudioRecord? _audioRecord;
     private AudioTrack? _audioTrack;
+    private NoiseSuppressor? _noiseSuppressor;
     private bool _isRecording = false;
     private bool _isPlaying = false;
     private bool _isMuted = false;
@@ -66,6 +68,13 @@ public class AndroidAudioService : IAudioService
                 throw new Exception("AudioRecord initialization failed");
             }
 
+            // Android-eigene Rauschunterdrueckung zusaetzlich zum WiRide-Filter
+            if (AppSettings.NoiseReductionEnabled && NoiseSuppressor.IsAvailable)
+            {
+                _noiseSuppressor = NoiseSuppressor.Create(_audioRecord.AudioSessionId);
+                _noiseSuppressor?.SetEnabled(true);
+            }
+
             _audioRecord.StartRecording();
             _isRecording = true;
 
@@ -120,6 +129,9 @@ public class AndroidAudioService : IAudioService
         _isRecording = false;
         _recordCts?.Cancel();
 
+        _noiseSuppressor?.Release();
+        _noiseSuppressor = null;
+
         _audioRecord?.Stop();
         _audioRecord?.Release();
         _audioRecord?.Dispose();
@@ -143,7 +155,12 @@ public class AndroidAudioService : IAudioService
             SampleRate = AppSettings.SampleRate;
             int minBufferSize = AudioTrack.GetMinBufferSize(SampleRate, PlayChannelConfig, AudioFormat);
 
-            _audioTrack = new AudioTrack.Builder()
+            // Niedrige Latenz: kleinster Puffer; Kompatibilitaet: 4 Frames wie in v1.1
+            int bufferBytes = AppSettings.LowLatency
+                ? Math.Max(minBufferSize, BufferSize * 2)
+                : Math.Max(minBufferSize, BufferSize * 4);
+
+            var builder = new AudioTrack.Builder()
                 .SetAudioAttributes(new AudioAttributes.Builder()!
                     .SetUsage(AudioUsageKind.VoiceCommunication)!
                     .SetContentType(AudioContentType.Speech)!
@@ -153,8 +170,12 @@ public class AndroidAudioService : IAudioService
                     .SetSampleRate(SampleRate)!
                     .SetChannelMask(PlayChannelConfig)!
                     .Build()!)
-                .SetBufferSizeInBytes(Math.Max(minBufferSize, BufferSize * 4))
-                .Build();
+                .SetBufferSizeInBytes(bufferBytes);
+
+            if (AppSettings.LowLatency && OperatingSystem.IsAndroidVersionAtLeast(26))
+                builder.SetPerformanceMode(AudioTrackPerformanceMode.LowLatency);
+
+            _audioTrack = builder.Build();
 
             if (_audioTrack?.State != AudioTrackState.Initialized)
             {

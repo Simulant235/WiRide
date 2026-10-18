@@ -78,6 +78,53 @@ public static class AppSettings
         set => Preferences.Set(nameof(FontScaleIndex), value);
     }
 
+    // ---- Audio-Verarbeitung (betrifft nur dieses Handy) ----
+
+    // true = niedrige Latenz, false = Kompatibilitaetsmodus (groessere Puffer wie v1.1)
+    public static bool LowLatency
+    {
+        get => Preferences.Get(nameof(LowLatency), true);
+        set => Preferences.Set(nameof(LowLatency), value);
+    }
+
+    public static bool NoiseReductionEnabled
+    {
+        get => Preferences.Get(nameof(NoiseReductionEnabled), true);
+        set => Preferences.Set(nameof(NoiseReductionEnabled), value);
+    }
+
+    public static double NoiseReductionStrength
+    {
+        get => Preferences.Get(nameof(NoiseReductionStrength), 0.5);
+        set => Preferences.Set(nameof(NoiseReductionStrength), Math.Clamp(value, 0, 1));
+    }
+
+    // Normalisierung: leise Rider lauter, laute leiser (nur im eigenen Mix)
+    public static bool NormalizeEnabled
+    {
+        get => Preferences.Get(nameof(NormalizeEnabled), true);
+        set => Preferences.Set(nameof(NormalizeEnabled), value);
+    }
+
+    public static double NormalizeStrength
+    {
+        get => Preferences.Get(nameof(NormalizeStrength), 0.6);
+        set => Preferences.Set(nameof(NormalizeStrength), Math.Clamp(value, 0, 1));
+    }
+
+    // Sprachaktivierung: nur senden, wenn gesprochen wird (experimentell)
+    public static bool VoiceActivationEnabled
+    {
+        get => Preferences.Get(nameof(VoiceActivationEnabled), false);
+        set => Preferences.Set(nameof(VoiceActivationEnabled), value);
+    }
+
+    public static double VoiceActivationSensitivity
+    {
+        get => Preferences.Get(nameof(VoiceActivationSensitivity), 0.5);
+        set => Preferences.Set(nameof(VoiceActivationSensitivity), Math.Clamp(value, 0, 1));
+    }
+
     public static PasswordCharset PasswordCharset
     {
         get => (PasswordCharset)Preferences.Get(nameof(PasswordCharset), (int)PasswordCharset.LettersAndDigits);

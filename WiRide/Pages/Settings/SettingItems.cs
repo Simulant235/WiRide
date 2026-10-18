@@ -27,6 +27,16 @@ public sealed class SliderSetting : SettingItem
     public Func<double, string> Format { get; init; } = v => $"{v * 100:0} %";
 }
 
+// Schalter mit Regler darunter (Regler nur sichtbar, wenn eingeschaltet)
+public sealed class ToggleSliderSetting : SettingItem
+{
+    public required Func<bool> GetEnabled { get; init; }
+    public required Action<bool> SetEnabled { get; init; }
+    public required Func<double> GetValue { get; init; }
+    public required Action<double> SetValue { get; init; }
+    public string SliderLabelKey { get; init; } = "Strength";
+}
+
 public sealed class ChoiceSetting : SettingItem
 {
     public required Func<IReadOnlyList<string>> Options { get; init; }

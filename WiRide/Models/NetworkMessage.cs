@@ -42,6 +42,11 @@ public class NetworkMessage
     public long Timestamp { get; set; }
     public int LatencyMs { get; set; }
 
+    // Ping-Zusatzinfos (optional, aeltere Versionen senden sie nicht)
+    public byte NormalizeStrength { get; set; }   // 0 = aus, 1-100 = Staerke der Normalisierung fuer den eigenen Mix
+    public sbyte BatteryPercent { get; set; } = -1; // -1 = unbekannt
+    public short SignalDbm { get; set; }            // 0 = unbekannt
+
     public byte[] Serialize()
     {
         using var stream = new MemoryStream(HeaderSize + Data.Length + 16);
@@ -72,6 +77,12 @@ public class NetworkMessage
             case MessageType.Pong:
                 writer.Write(Timestamp);
                 writer.Write(LatencyMs);
+                if (Type == MessageType.Ping)
+                {
+                    writer.Write(NormalizeStrength);
+                    writer.Write(BatteryPercent);
+                    writer.Write(SignalDbm);
+                }
                 break;
         }
 
@@ -114,6 +125,12 @@ public class NetworkMessage
                 case MessageType.Pong:
                     message.Timestamp = reader.ReadInt64();
                     message.LatencyMs = reader.ReadInt32();
+                    if (message.Type == MessageType.Ping && reader.BaseStream.Length - reader.BaseStream.Position >= 4)
+                    {
+                        message.NormalizeStrength = reader.ReadByte();
+                        message.BatteryPercent = reader.ReadSByte();
+                        message.SignalDbm = reader.ReadInt16();
+                    }
                     break;
 
                 case MessageType.Leave:

@@ -17,8 +17,11 @@ public class IntercomService
 {
     public const string HostSourceId = "host";
 
-    // Abspiel-Puffer klein halten (5 x 20 ms = 100 ms) fuer niedrige Latenz
-    private const int PlaybackQueueFrames = 5;
+    // Abspiel-Puffer: niedrige Latenz 3 Frames (60 ms), Kompatibilitaet 5 Frames (100 ms)
+    private static int PlaybackQueueFrames => AppSettings.LowLatency ? 3 : 5;
+    private static int JitterBufferFrames => AppSettings.LowLatency ? 3 : 4;
+
+    private readonly AudioProcessor _processor = new();
 
     private readonly INetworkService _network;
     private readonly IAudioService _audio;
@@ -127,6 +130,8 @@ public class IntercomService
     private async Task StartAudioAsync()
     {
         _audio.MaxQueuedChunks = PlaybackQueueFrames;
+        _mixer.MaxBufferedFrames = JitterBufferFrames;
+        _processor.Reset();
         _audio.Volume = AppSettings.Volume;
         await _audio.StartPlaybackAsync();
         await _audio.StartRecordingAsync();
@@ -167,8 +172,14 @@ public class IntercomService
         _network.LatencyUpdated -= OnLatencyUpdated;
     }
 
-    private void OnAudioCaptured(object? sender, byte[] pcm)
+    private void OnAudioCaptured(object? sender, byte[] captured)
     {
+        // Eigenes Mikrofon bearbeiten (Rauschunterdrueckung, Sprachaktivierung)
+        var samples = AudioProcessor.ToSamples(captured);
+        if (!_processor.Process(samples, AppSettings.SampleRate))
+            return;
+        var pcm = AudioProcessor.ToBytes(samples);
+
         if (Role == IntercomRole.Host)
             _mixer.AddClientAudio(HostSourceId, pcm);
         else if (Role == IntercomRole.Client)
@@ -202,12 +213,13 @@ public class IntercomService
                 {
                     foreach (var client in _network.ConnectedClients)
                     {
-                        var mix = AudioMixerService.MixMinus(frame, client.ClientId);
+                        var mix = AudioMixerService.MixMinus(frame, client.ClientId, client.NormalizeStrength / 100.0);
                         if (mix != null)
                             _network.SendAudio(_codec.Encode(client.ClientId, mix), _codec.OutgoingCodec, client.ClientId);
                     }
 
-                    var hostMix = AudioMixerService.MixMinus(frame, HostSourceId);
+                    var hostMix = AudioMixerService.MixMinus(frame, HostSourceId,
+                        AppSettings.NormalizeEnabled ? AppSettings.NormalizeStrength : 0);
                     if (hostMix != null)
                         await _audio.PlayAudioAsync(hostMix);
                 }

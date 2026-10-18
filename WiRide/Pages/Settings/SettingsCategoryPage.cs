@@ -61,6 +61,45 @@ public class SettingsCategoryPage : ContentPage
                 });
             }
 
+            case ToggleSliderSetting toggleSlider:
+            {
+                var percent = new Label { Style = SettingsUi.Style("WrCaption"), VerticalOptions = LayoutOptions.Center };
+                var slider = new Slider(0, 1, toggleSlider.GetValue())
+                {
+                    MinimumTrackColor = ThemeManager.Get("WrAccent"),
+                    ThumbColor = ThemeManager.Get("WrAccent")
+                };
+                var sliderRow = new Grid
+                {
+                    ColumnDefinitions = { new ColumnDefinition(GridLength.Auto), new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Auto) },
+                    ColumnSpacing = 10,
+                    IsVisible = toggleSlider.GetEnabled()
+                };
+                sliderRow.Add(new Label { Text = Loc.T(toggleSlider.SliderLabelKey), Style = SettingsUi.Style("WrCaption"), VerticalOptions = LayoutOptions.Center }, 0);
+                sliderRow.Add(slider, 1);
+                sliderRow.Add(percent, 2);
+                percent.Text = $"{slider.Value * 100:0} %";
+
+                slider.ValueChanged += (_, e) =>
+                {
+                    percent.Text = $"{e.NewValue * 100:0} %";
+                    Changed(item, () => toggleSlider.SetValue(e.NewValue));
+                };
+
+                var sw = new Switch { IsToggled = toggleSlider.GetEnabled(), OnColor = ThemeManager.Get("WrAccent"), ThumbColor = Colors.White };
+                sw.Toggled += (_, e) =>
+                {
+                    sliderRow.IsVisible = e.Value;
+                    Changed(item, () => toggleSlider.SetEnabled(e.Value));
+                };
+
+                return SettingsUi.Card(new VerticalStackLayout
+                {
+                    Spacing = 10,
+                    Children = { SettingsUi.Row(item.Icon, title, description, sw, item.Experimental), sliderRow }
+                });
+            }
+
             case ChoiceSetting choice:
             {
                 var picker = new Picker

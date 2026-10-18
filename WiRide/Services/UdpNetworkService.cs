@@ -263,7 +263,10 @@ public class UdpNetworkService : INetworkService
                 Type = MessageType.Ping,
                 SenderId = _localId,
                 Timestamp = Now,
-                LatencyMs = _latencyMs
+                LatencyMs = _latencyMs,
+                NormalizeStrength = AppSettings.NormalizeEnabled ? (byte)Math.Clamp(AppSettings.NormalizeStrength * 100, 1, 100) : (byte)0,
+                BatteryPercent = DeviceStatus.BatteryPercent,
+                SignalDbm = DeviceStatus.SignalDbm
             }, _hostEndPoint);
         }
     }
@@ -393,6 +396,9 @@ public class UdpNetworkService : INetworkService
                     pinger.LastSeen = DateTime.UtcNow;
                     pinger.EndPoint = remote;
                     pinger.LatencyMs = message.LatencyMs;
+                    pinger.NormalizeStrength = message.NormalizeStrength;
+                    pinger.BatteryPercent = message.BatteryPercent;
+                    pinger.SignalDbm = message.SignalDbm;
                     Send(new NetworkMessage { Type = MessageType.Pong, SenderId = _localId, Timestamp = message.Timestamp }, remote);
                 }
                 else

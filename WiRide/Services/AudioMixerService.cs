@@ -1,20 +1,23 @@
 namespace WiRide.Services;
 
 // Mix-Minus-Mixer fuer PCM 16-bit Mono.
-// Pro Tick wird von jeder Quelle ein Frame genommen und aufsummiert.
-// Jeder Teilnehmer bekommt die Summe OHNE seine eigene Stimme (kein Echo).
+// Pro Tick wird von jeder Quelle ein Frame genommen. Jeder Zuhoerer bekommt alle Quellen
+// OHNE seine eigene Stimme (kein Echo), optional normalisiert nach seinen eigenen Wuenschen.
 public class AudioMixerService
 {
-    // Jitter-Buffer pro Quelle: max. 4 Frames (= 80 ms), aeltere werden verworfen
-    private const int MaxBufferedFrames = 4;
+    private const double TargetRms = 3000;   // Ziel-Lautstaerke fuer die Normalisierung
+    private const double SilenceRms = 300;   // darunter ist es Stille/Rauschen -> Verstaerkung nicht anpassen
 
     private readonly Dictionary<string, Queue<short[]>> _buffers = new();
+    private readonly Dictionary<string, double> _sourceGain = new();
     private readonly object _lock = new();
+
+    // Jitter-Buffer pro Quelle (Frames), aeltere werden verworfen
+    public int MaxBufferedFrames { get; set; } = 4;
 
     public void AddClientAudio(string sourceId, byte[] pcm16)
     {
-        var samples = new short[pcm16.Length / 2];
-        Buffer.BlockCopy(pcm16, 0, samples, 0, samples.Length * 2);
+        var samples = AudioProcessor.ToSamples(pcm16);
 
         lock (_lock)
         {
@@ -44,6 +47,7 @@ public class AudioMixerService
 
                 var samples = queue.Dequeue();
                 frame.Parts[sourceId] = samples;
+                frame.NormalizeGain[sourceId] = UpdateGain(sourceId, samples);
 
                 int length = Math.Min(samples.Length, frameSamples);
                 for (int i = 0; i < length; i++)
@@ -54,26 +58,62 @@ public class AudioMixerService
         }
     }
 
-    // Mix-Minus: Summe aller Quellen ausser excludeId. null = nichts zu hoeren.
-    public static byte[]? MixMinus(MixFrame frame, string excludeId)
+    // Weich nachgefuehrte Verstaerkung, die diese Quelle auf Ziel-Lautstaerke bringen wuerde
+    private double UpdateGain(string sourceId, short[] samples)
+    {
+        double current = _sourceGain.GetValueOrDefault(sourceId, 1.0);
+        double rms = AudioProcessor.Rms(samples);
+
+        if (rms > SilenceRms)
+        {
+            double target = Math.Clamp(TargetRms / rms, 0.25, 4.0);
+            current = current * 0.85 + target * 0.15;
+            _sourceGain[sourceId] = current;
+        }
+
+        return current;
+    }
+
+    // Mix-Minus fuer einen Zuhoerer. normalizeStrength 0 = aus, 1 = volle Normalisierung.
+    // null = nichts zu hoeren.
+    public static byte[]? MixMinus(MixFrame frame, string excludeId, double normalizeStrength = 0)
     {
         frame.Parts.TryGetValue(excludeId, out var own);
         if (frame.Parts.Count - (own != null ? 1 : 0) == 0)
             return null;
 
-        var result = new byte[frame.Sum.Length * 2];
-        for (int i = 0; i < frame.Sum.Length; i++)
-        {
-            int value = frame.Sum[i];
-            if (own != null && i < own.Length)
-                value -= own[i];
+        var result = new short[frame.Sum.Length];
 
-            short clamped = (short)Math.Clamp(value, short.MinValue, short.MaxValue);
-            result[i * 2] = (byte)clamped;
-            result[i * 2 + 1] = (byte)(clamped >> 8);
+        if (normalizeStrength <= 0)
+        {
+            // Schneller Weg: Summe minus eigene Stimme
+            for (int i = 0; i < result.Length; i++)
+            {
+                int value = frame.Sum[i];
+                if (own != null && i < own.Length)
+                    value -= own[i];
+                result[i] = (short)Math.Clamp(value, short.MinValue, short.MaxValue);
+            }
+        }
+        else
+        {
+            var mix = new double[result.Length];
+            foreach (var (sourceId, samples) in frame.Parts)
+            {
+                if (sourceId == excludeId)
+                    continue;
+
+                double gain = Math.Pow(frame.NormalizeGain[sourceId], normalizeStrength);
+                int length = Math.Min(samples.Length, mix.Length);
+                for (int i = 0; i < length; i++)
+                    mix[i] += samples[i] * gain;
+            }
+
+            for (int i = 0; i < result.Length; i++)
+                result[i] = (short)Math.Clamp(mix[i], short.MinValue, short.MaxValue);
         }
 
-        return result;
+        return AudioProcessor.ToBytes(result);
     }
 
     public void RemoveClient(string sourceId)
@@ -81,6 +121,7 @@ public class AudioMixerService
         lock (_lock)
         {
             _buffers.Remove(sourceId);
+            _sourceGain.Remove(sourceId);
         }
     }
 
@@ -89,6 +130,7 @@ public class AudioMixerService
         lock (_lock)
         {
             _buffers.Clear();
+            _sourceGain.Clear();
         }
     }
 }
@@ -99,4 +141,5 @@ public sealed class MixFrame
 
     public int[] Sum { get; }
     public Dictionary<string, short[]> Parts { get; } = new();
+    public Dictionary<string, double> NormalizeGain { get; } = new();
 }

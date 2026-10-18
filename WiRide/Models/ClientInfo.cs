@@ -11,6 +11,11 @@ public class ClientInfo
     public bool IsConnected { get; set; }
     public int LatencyMs { get; set; }
 
+    // Vom Client per Ping gemeldet
+    public byte NormalizeStrength { get; set; }
+    public int BatteryPercent { get; set; } = -1;
+    public int SignalDbm { get; set; }
+
     // Absender-Adresse inkl. Port (Clients nutzen zufaellige lokale Ports)
     public IPEndPoint? EndPoint { get; set; }
 
