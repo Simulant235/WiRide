@@ -11,7 +11,7 @@ namespace WiRide.Platforms.Android.Services;
 
 // Haelt Mikrofon, CPU und WLAN aktiv, solange eine Intercom-Sitzung laeuft
 // (z.B. bei gesperrtem Bildschirm waehrend der Fahrt).
-[Service(Exported = false, ForegroundServiceType = ForegroundService.TypeMicrophone | ForegroundService.TypeMediaProjection)]
+[Service(Exported = false, ForegroundServiceType = ForegroundService.TypeMicrophone | ForegroundService.TypeMediaProjection | ForegroundService.TypeLocation)]
 public class IntercomForegroundService : Service
 {
     private const int NotificationId = 1001;
@@ -58,9 +58,18 @@ public class IntercomForegroundService : Service
             return false;
 
         if (Build.VERSION.SdkInt >= BuildVersionCodes.Q)
-            _instance.StartForeground(NotificationId, _instance._notification,
-                ForegroundService.TypeMicrophone | ForegroundService.TypeMediaProjection);
+            _instance.StartForeground(NotificationId, _instance._notification, BaseTypes() | ForegroundService.TypeMediaProjection);
         return true;
+    }
+
+    // Mikrofon immer; Standort nur fuer "Lautstaerke nach Tempo" (und nur mit Berechtigung)
+    private static ForegroundService BaseTypes()
+    {
+        var types = ForegroundService.TypeMicrophone;
+        if (AppSettings.SpeedVolumeEnabled &&
+            AndroidX.Core.Content.ContextCompat.CheckSelfPermission(AndroidApp.Context, global::Android.Manifest.Permission.AccessFineLocation) == Permission.Granted)
+            types |= ForegroundService.TypeLocation;
+        return types;
     }
 
     public override StartCommandResult OnStartCommand(Intent? intent, StartCommandFlags flags, int startId)
@@ -95,7 +104,7 @@ public class IntercomForegroundService : Service
         _notification = notification;
 
         if (Build.VERSION.SdkInt >= BuildVersionCodes.Q)
-            StartForeground(NotificationId, notification, ForegroundService.TypeMicrophone);
+            StartForeground(NotificationId, notification, BaseTypes());
         else
             StartForeground(NotificationId, notification);
 

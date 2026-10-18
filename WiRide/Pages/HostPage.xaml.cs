@@ -9,6 +9,13 @@ public partial class HostPage : ContentPage
     private IDispatcherTimer? _refreshTimer;
     private HotspotMode _mode;
     private bool _busy;
+    private bool _autoStart;
+
+    // autoStart = Schnellstart: mit letztem Modus und Passwort sofort hosten
+    public HostPage(bool autoStart) : this()
+    {
+        _autoStart = autoStart;
+    }
 
     public HostPage()
     {
@@ -32,7 +39,16 @@ public partial class HostPage : ContentPage
         _refreshTimer.Start();
 
         UpdateUi();
+
+        if (_autoStart)
+        {
+            _autoStart = false;
+            Dispatcher.Dispatch(() => OnStartStopClicked(null, EventArgs.Empty));
+        }
     }
+
+    // Schnellstart nutzt die Werte der letzten Sitzung
+    private bool _useLastSetup;
 
     protected override void OnDisappearing()
     {
@@ -58,6 +74,8 @@ public partial class HostPage : ContentPage
     {
         if (_busy)
             return;
+
+        _useLastSetup = sender == null;
 
         _busy = true;
         StartStopButton.IsEnabled = false;
@@ -86,7 +104,9 @@ public partial class HostPage : ContentPage
         if (!await PermissionHelper.CheckAndRequestAsync(this))
             return;
 
-        var setup = await HotspotSetupPage.ShowAsync(Navigation);
+        var setup = _useLastSetup && PasswordGenerator.Validate(AppSettings.LastHotspotPassword) == null
+            ? new HotspotSetupResult((HotspotMode)AppSettings.LastHotspotMode, AppSettings.LastHotspotPassword)
+            : await HotspotSetupPage.ShowAsync(Navigation);
         if (setup == null)
             return;
 
@@ -116,6 +136,7 @@ public partial class HostPage : ContentPage
             _wifi.OpenHotspotSettings();
 
         await _intercom.StartHostAsync();
+        AppSettings.LastRole = AppSettings.RoleHost;
     }
 
     private void UpdateUi()

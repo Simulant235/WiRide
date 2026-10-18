@@ -224,5 +224,19 @@
   "EvtConnected": "Connected to {0}",
   "EvtConnectionLost": "Connection lost",
   "EvtReconnected": "Reconnected",
-  "EvtTest": "This is a test announcement from WiRide."
+  "EvtTest": "This is a test announcement from WiRide.",
+  "QuickHostAgain": "Host again",
+  "QuickHostAgainDesc": "With the same Wi-Fi password as last time",
+  "QuickReconnect": "Reconnect to {0}",
+  "QuickChecking": "Checking whether the host is online...",
+  "QuickHostOnline": "Host is online · tap to connect",
+  "QuickHostOffline": "Host is currently not online",
+  "QuickHostOfflineText": "The host is not online. Start the group on the host's phone first or move closer.",
+  "SetQuickStart": "Quick start",
+  "SetQuickStartDesc": "Shows the last group on the start screen",
+  "SetForgetSession": "Forget last group",
+  "SetForgetSessionDesc": "Deletes the saved Wi-Fi and password",
+  "SessionForgotten": "The last group was forgotten.",
+  "SetSpeedVolume": "Speed-dependent volume",
+  "SetSpeedVolumeDesc": "The faster you ride, the louder it gets (uses GPS)"
 }

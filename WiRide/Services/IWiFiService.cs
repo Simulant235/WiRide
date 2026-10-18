@@ -18,6 +18,9 @@ public interface IWiFiService
     void OpenHotspotSettings();
 
     Task<List<string>> ScanNetworksAsync();
+
+    // Netze aus dem letzten Scan (triggerScan = neuen Scan anstossen, Android drosselt das)
+    List<string> GetVisibleNetworks(bool triggerScan);
     Task<bool> ConnectToNetworkAsync(string ssid, string password);
     Task DisconnectFromNetworkAsync();
 

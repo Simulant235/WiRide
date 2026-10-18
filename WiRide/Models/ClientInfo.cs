@@ -19,7 +19,24 @@ public class ClientInfo
     // Absender-Adresse inkl. Port (Clients nutzen zufaellige lokale Ports)
     public IPEndPoint? EndPoint { get; set; }
 
-    public string LatencyText => LatencyMs > 0 ? $"{LatencyMs} ms" : WiRide.Services.Loc.T("RiderConnected");
+    // z.B. "🔋 80 % · 📶 3/4 · 25 ms"
+    public string LatencyText
+    {
+        get
+        {
+            var parts = new List<string>();
+            if (BatteryPercent >= 0)
+                parts.Add($"🔋 {BatteryPercent} %");
+            int bars = WiRide.Services.DeviceStatus.SignalBars(SignalDbm);
+            if (bars >= 0)
+                parts.Add($"📶 {bars}/4");
+            if (LatencyMs > 0)
+                parts.Add($"{LatencyMs} ms");
+            return parts.Count > 0 ? string.Join(" · ", parts) : WiRide.Services.Loc.T("RiderConnected");
+        }
+    }
+
+    public bool IsWeak => (BatteryPercent is >= 0 and < 20) || WiRide.Services.DeviceStatus.SignalBars(SignalDbm) is 0 or 1;
 }
 
 public record GroupEvent(GroupEventCode Code, string RiderName, string SenderId);

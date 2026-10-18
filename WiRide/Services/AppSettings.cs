@@ -182,6 +182,67 @@ public static class AppSettings
         set => Preferences.Set(nameof(MusicSharingEnabled), value);
     }
 
+    // ---- Letzte Sitzung (Schnellstart) ----
+
+    public const string RoleHost = "host";
+    public const string RoleClient = "client";
+
+    public static string LastRole
+    {
+        get => Preferences.Get(nameof(LastRole), string.Empty);
+        set => Preferences.Set(nameof(LastRole), value);
+    }
+
+    public static string LastHostName
+    {
+        get => Preferences.Get(nameof(LastHostName), string.Empty);
+        set => Preferences.Set(nameof(LastHostName), value);
+    }
+
+    public static string LastWifiSsid
+    {
+        get => Preferences.Get(nameof(LastWifiSsid), string.Empty);
+        set => Preferences.Set(nameof(LastWifiSsid), value);
+    }
+
+    public static string LastWifiPassword
+    {
+        get => Preferences.Get(nameof(LastWifiPassword), string.Empty);
+        set => Preferences.Set(nameof(LastWifiPassword), value);
+    }
+
+    // Host: zuletzt benutztes Hotspot-Passwort bleibt, bis man es aendert
+    public static string LastHotspotPassword
+    {
+        get => Preferences.Get(nameof(LastHotspotPassword), string.Empty);
+        set => Preferences.Set(nameof(LastHotspotPassword), value);
+    }
+
+    public static int LastHotspotMode
+    {
+        get => Preferences.Get(nameof(LastHotspotMode), 0);
+        set => Preferences.Set(nameof(LastHotspotMode), value);
+    }
+
+    public static bool QuickStartEnabled
+    {
+        get => Preferences.Get(nameof(QuickStartEnabled), true);
+        set => Preferences.Set(nameof(QuickStartEnabled), value);
+    }
+
+    // Lautstaerke steigt mit der Geschwindigkeit (GPS)
+    public static bool SpeedVolumeEnabled
+    {
+        get => Preferences.Get(nameof(SpeedVolumeEnabled), false);
+        set => Preferences.Set(nameof(SpeedVolumeEnabled), value);
+    }
+
+    public static double SpeedVolumeStrength
+    {
+        get => Preferences.Get(nameof(SpeedVolumeStrength), 0.5);
+        set => Preferences.Set(nameof(SpeedVolumeStrength), Math.Clamp(value, 0, 1));
+    }
+
     public static PasswordCharset PasswordCharset
     {
         get => (PasswordCharset)Preferences.Get(nameof(PasswordCharset), (int)PasswordCharset.LettersAndDigits);

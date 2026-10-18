@@ -33,6 +33,7 @@ public class IntercomService
     private readonly IWiFiService _wifi;
     private readonly AnnouncementService _announcer;
     private readonly IMusicCapture _music;
+    private readonly SpeedVolumeService _speedVolume;
     private readonly ConcurrentDictionary<string, string> _riderNames = new();
 
     private CancellationTokenSource? _mixCts;
@@ -42,8 +43,10 @@ public class IntercomService
     private bool _wasConnected;
 
     public IntercomService(INetworkService network, IAudioService audio, AudioMixerService mixer,
-        AudioCodecService codec, IWiFiService wifi, AnnouncementService announcer, IMusicCapture music)
+        AudioCodecService codec, IWiFiService wifi, AnnouncementService announcer, IMusicCapture music,
+        SpeedVolumeService speedVolume)
     {
+        _speedVolume = speedVolume;
         _network = network;
         _audio = audio;
         _mixer = mixer;
@@ -106,6 +109,8 @@ public class IntercomService
             return false;
 
         AppSettings.LastHostIp = hostIp;
+        AppSettings.LastHostName = _network.HostName ?? hostIp;
+        AppSettings.LastRole = AppSettings.RoleClient;
         Subscribe();
         Role = IntercomRole.Client;
         _wasConnected = true;
@@ -135,6 +140,7 @@ public class IntercomService
         await _audio.StopRecordingAsync();
         await _audio.StopPlaybackAsync();
         StopDucking();
+        _speedVolume.Stop();
 
         if (Role == IntercomRole.Host)
         {
@@ -207,6 +213,7 @@ public class IntercomService
         await _audio.StartRecordingAsync();
 
         _duckTimer = new Timer(_ => UpdateDucking(), null, 150, 150);
+        await _speedVolume.StartAsync();
     }
 
     private void Subscribe()

@@ -23,6 +23,22 @@
 
             <Label x:Name="GreetingLabel" Style="{StaticResource WrBody}" FontSize="{DynamicResource WrFontLarge}" Margin="4,0,0,8" />
 
+            <!-- Schnellstart: letzte Sitzung -->
+            <Border x:Name="QuickStartCard" Style="{StaticResource WrCard}" Padding="16,12" IsVisible="False"
+                    Stroke="{StaticResource WrAccent}" StrokeThickness="1">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnQuickStartTapped" />
+                </Border.GestureRecognizers>
+                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
+                    <Label x:Name="QuickStartIcon" Style="{StaticResource WrIcon}" TextColor="{StaticResource WrAccent}" />
+                    <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                        <Label x:Name="QuickStartTitle" Style="{StaticResource WrBody}" FontAttributes="Bold" />
+                        <Label x:Name="QuickStartDetail" Style="{StaticResource WrCaption}" />
+                    </VerticalStackLayout>
+                    <Ellipse x:Name="QuickStartDot" Grid.Column="2" WidthRequest="10" HeightRequest="10" VerticalOptions="Center" />
+                </Grid>
+            </Border>
+
             <!-- Host -->
             <Border Style="{StaticResource WrCard}" Padding="20">
                 <Border.GestureRecognizers>

@@ -18,7 +18,20 @@ public partial class HotspotSetupPage : ContentPage
     public HotspotSetupPage()
     {
         InitializeComponent();
-        RegeneratePassword();
+
+        // Letztes Passwort bleibt, bis man es aendert; sonst neu generieren
+        var last = AppSettings.LastHotspotPassword;
+        if (PasswordGenerator.Validate(last) == null)
+        {
+            PasswordEntry.Placeholder = last;
+            PasswordEntry.Text = last;
+        }
+        else
+        {
+            RegeneratePassword();
+        }
+
+        _mode = (HotspotMode)AppSettings.LastHotspotMode;
         UpdateSelection();
     }
 
@@ -84,6 +97,10 @@ public partial class HotspotSetupPage : ContentPage
     {
         if (!ValidatePassword())
             return;
+
+        AppSettings.LastHotspotMode = (int)_mode;
+        if (_mode == HotspotMode.Automatic)
+            AppSettings.LastHotspotPassword = PasswordEntry.Text ?? string.Empty;
 
         _result.TrySetResult(new HotspotSetupResult(_mode, PasswordEntry.Text ?? string.Empty));
         await Navigation.PopModalAsync();
