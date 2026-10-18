@@ -155,5 +155,19 @@
   "Reset": "Reset",
   "SetVersion": "Version",
   "SetSource": "Source code on GitHub",
-  "NextConnectionHint": "Applies from the next connection"
+  "NextConnectionHint": "Applies from the next connection",
+  "CatVoice": "Voice & noise",
+  "CatVoiceDesc": "Noise reduction, normalization, voice activation",
+  "SetLatency": "Latency mode",
+  "SetLatencyDesc": "Switch to compatibility if you hear crackling or dropouts",
+  "LatencyLow": "Low latency (recommended)",
+  "LatencyCompat": "Compatibility (larger buffers)",
+  "SetNormalize": "Normalization",
+  "SetNormalizeDesc": "Evens out loud and quiet riders. Only affects what you hear.",
+  "SetNoiseReduction": "Noise reduction",
+  "SetNoiseReductionDesc": "Filters wind and engine noise from your microphone",
+  "SetVoiceActivation": "Voice activation",
+  "SetVoiceActivationDesc": "Only transmits while you speak. Saves battery and data.",
+  "Strength": "Strength",
+  "Sensitivity": "Sensitivity"
 }

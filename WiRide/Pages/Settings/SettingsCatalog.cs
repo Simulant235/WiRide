@@ -14,6 +14,7 @@ public static class SettingsCatalog
     {
         new("CatProfile", "CatProfileDesc", Icons.Person, Profile),
         new("CatAudio", "CatAudioDesc", Icons.Headset, Audio_),
+        new("CatVoice", "CatVoiceDesc", Icons.Mic, Voice),
         new("CatAppearance", "CatAppearanceDesc", Icons.Tune, Appearance),
         new("CatHotspot", "CatHotspotDesc", Icons.WifiTethering, Hotspot),
         new("CatConnection", "CatConnectionDesc", Icons.Wifi, Connection),
@@ -63,12 +64,57 @@ public static class SettingsCatalog
         };
         yield return new ChoiceSetting
         {
+            TitleKey = "SetLatency",
+            DescriptionKey = "SetLatencyDesc",
+            Icon = Icons.Autorenew,
+            Options = () => new[] { Loc.T("LatencyLow"), Loc.T("LatencyCompat") },
+            Get = () => AppSettings.LowLatency ? 0 : 1,
+            Set = i => AppSettings.LowLatency = i == 0
+        };
+        yield return new ChoiceSetting
+        {
             TitleKey = "SetQuality",
             DescriptionKey = "SetQualityDesc",
             Icon = Icons.Headset,
             Options = () => new[] { Loc.T("Q8"), Loc.T("Q16"), Loc.T("Q24"), Loc.T("Q48") },
             Get = () => Array.IndexOf(AppSettings.SupportedSampleRates, AppSettings.SampleRate),
             Set = i => AppSettings.SampleRate = AppSettings.SupportedSampleRates[i]
+        };
+    }
+
+    private static IEnumerable<SettingItem> Voice()
+    {
+        yield return new ToggleSliderSetting
+        {
+            TitleKey = "SetNormalize",
+            DescriptionKey = "SetNormalizeDesc",
+            Icon = Icons.Volume,
+            GetEnabled = () => AppSettings.NormalizeEnabled,
+            SetEnabled = v => AppSettings.NormalizeEnabled = v,
+            GetValue = () => AppSettings.NormalizeStrength,
+            SetValue = v => AppSettings.NormalizeStrength = v
+        };
+        yield return new ToggleSliderSetting
+        {
+            TitleKey = "SetNoiseReduction",
+            DescriptionKey = "SetNoiseReductionDesc",
+            Icon = Icons.Tune,
+            GetEnabled = () => AppSettings.NoiseReductionEnabled,
+            SetEnabled = v => AppSettings.NoiseReductionEnabled = v,
+            GetValue = () => AppSettings.NoiseReductionStrength,
+            SetValue = v => AppSettings.NoiseReductionStrength = v
+        };
+        yield return new ToggleSliderSetting
+        {
+            TitleKey = "SetVoiceActivation",
+            DescriptionKey = "SetVoiceActivationDesc",
+            Icon = Icons.Mic,
+            Experimental = true,
+            SliderLabelKey = "Sensitivity",
+            GetEnabled = () => AppSettings.VoiceActivationEnabled,
+            SetEnabled = v => AppSettings.VoiceActivationEnabled = v,
+            GetValue = () => AppSettings.VoiceActivationSensitivity,
+            SetValue = v => AppSettings.VoiceActivationSensitivity = v
         };
     }
 

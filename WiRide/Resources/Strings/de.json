@@ -155,5 +155,19 @@
   "Reset": "Zurücksetzen",
   "SetVersion": "Version",
   "SetSource": "Quellcode auf GitHub",
-  "NextConnectionHint": "Gilt ab der nächsten Verbindung"
+  "NextConnectionHint": "Gilt ab der nächsten Verbindung",
+  "CatVoice": "Sprache & Geräusche",
+  "CatVoiceDesc": "Rauschunterdrückung, Normalisierung, Sprachaktivierung",
+  "SetLatency": "Latenz-Modus",
+  "SetLatencyDesc": "Bei Knacken oder Aussetzern auf Kompatibilität stellen",
+  "LatencyLow": "Niedrige Latenz (empfohlen)",
+  "LatencyCompat": "Kompatibilität (größere Puffer)",
+  "SetNormalize": "Normalisierung",
+  "SetNormalizeDesc": "Gleicht laute und leise Rider an. Betrifft nur, was du hörst.",
+  "SetNoiseReduction": "Rauschunterdrückung",
+  "SetNoiseReductionDesc": "Filtert Wind- und Motorgeräusche aus deinem Mikrofon",
+  "SetVoiceActivation": "Sprachaktivierung",
+  "SetVoiceActivationDesc": "Sendet nur, wenn du sprichst. Spart Akku und Daten.",
+  "Strength": "Stärke",
+  "Sensitivity": "Empfindlichkeit"
 }
