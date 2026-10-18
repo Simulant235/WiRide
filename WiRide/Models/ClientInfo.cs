@@ -14,7 +14,7 @@ public class ClientInfo
     // Absender-Adresse inkl. Port (Clients nutzen zufaellige lokale Ports)
     public IPEndPoint? EndPoint { get; set; }
 
-    public string LatencyText => LatencyMs > 0 ? $"{LatencyMs} ms" : "verbunden";
+    public string LatencyText => LatencyMs > 0 ? $"{LatencyMs} ms" : WiRide.Services.Loc.T("RiderConnected");
 }
 
 public class DiscoveredHost

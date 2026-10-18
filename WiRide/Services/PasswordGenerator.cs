@@ -38,11 +38,11 @@ public static class PasswordGenerator
     public static string? Validate(string? password)
     {
         if (string.IsNullOrEmpty(password) || password.Length < MinLength)
-            return $"Mindestens {MinLength} Zeichen (WLAN-Vorgabe WPA2)";
+            return Loc.T("PwTooShort", MinLength);
         if (password.Length > MaxLength)
-            return $"Hoechstens {MaxLength} Zeichen";
+            return Loc.T("PwTooLong", MaxLength);
         if (!password.All(char.IsAsciiLetterOrDigit))
-            return "Nur Buchstaben (ohne Umlaute) und Zahlen";
+            return Loc.T("PwInvalidChars");
         return null;
     }
 }

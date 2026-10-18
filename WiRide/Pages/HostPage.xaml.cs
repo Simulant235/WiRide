@@ -71,7 +71,7 @@ public partial class HostPage : ContentPage
         }
         catch (Exception ex)
         {
-            await DisplayAlertAsync("Fehler", ex.Message, "OK");
+            await DisplayAlertAsync(Loc.T("Error"), ex.Message, Loc.T("Ok"));
         }
         finally
         {
@@ -91,16 +91,16 @@ public partial class HostPage : ContentPage
             return;
 
         _mode = setup.Mode;
-        StatusLabel.Text = "Starte Gruppe...";
+        StatusLabel.Text = Loc.T("HostStarting");
 
         if (_mode == HotspotMode.Automatic)
         {
             var hotspot = await _wifi.StartHotspotAsync(setup.Password);
             if (hotspot == null)
             {
-                var useManual = await DisplayAlertAsync("Automatischer Hotspot nicht möglich",
-                    $"{_wifi.LastError}\n\nDu kannst stattdessen den eigenen Handy-Hotspot nutzen.",
-                    "Eigener Hotspot", "Abbrechen");
+                var useManual = await DisplayAlertAsync(Loc.T("HostAutoFailedTitle"),
+                    Loc.T("HostAutoFailedText", _wifi.LastError),
+                    Loc.T("OwnHotspot"), Loc.T("Cancel"));
                 if (!useManual)
                     return;
 
@@ -108,9 +108,7 @@ public partial class HostPage : ContentPage
             }
             else if (hotspot.PasswordFromSystem)
             {
-                await DisplayAlertAsync("Hinweis",
-                    "Dieses Android erlaubt kein eigenes Passwort. Android hat dafür eines vergeben, es wird dir unten angezeigt.",
-                    "OK");
+                await DisplayAlertAsync(Loc.T("Notice"), Loc.T("HostSystemPassword"), Loc.T("Ok"));
             }
         }
 
@@ -127,13 +125,13 @@ public partial class HostPage : ContentPage
         var muted = (Color)Application.Current!.Resources["WrTextMuted"];
 
         StatusDot.Fill = hosting ? success : muted;
-        StatusLabel.Text = hosting ? "Gruppe läuft" : "Bereit zum Starten";
+        StatusLabel.Text = Loc.T(hosting ? "HostRunning" : "HostReady");
         IdleHint.IsVisible = !hosting;
         NetworkInfo.IsVisible = hosting;
         MuteSection.IsVisible = hosting;
         RidersSection.IsVisible = hosting;
 
-        StartStopButton.Text = hosting ? "Gruppe beenden" : "Gruppe starten";
+        StartStopButton.Text = Loc.T(hosting ? "GroupStop" : "GroupStart");
         StartStopButton.Style = (Style)Application.Current.Resources[hosting ? "WrDangerButton" : "WrPrimaryButton"];
 
         if (!hosting)
@@ -141,12 +139,12 @@ public partial class HostPage : ContentPage
 
         var hotspot = _wifi.CurrentHotspot;
         QrButton.IsVisible = hotspot != null;
-        SsidLabel.Text = hotspot?.Ssid ?? "Eigener Hotspot (Name siehe Android-Einstellungen)";
-        PasswordLabel.Text = hotspot?.Password ?? "wie im eigenen Hotspot eingestellt";
-        IpLabel.Text = $"IP {string.Join(", ", UdpNetworkService.GetLocalIpAddresses())} · Port {AppSettings.Port}";
+        SsidLabel.Text = hotspot?.Ssid ?? Loc.T("HostOwnSsid");
+        PasswordLabel.Text = hotspot?.Password ?? Loc.T("HostOwnPassword");
+        IpLabel.Text = Loc.T("HostIpInfo", string.Join(", ", UdpNetworkService.GetLocalIpAddresses()), AppSettings.Port);
 
         var clients = _intercom.Network.ConnectedClients.OrderBy(c => c.ClientName).ToList();
-        RidersTitle.Text = $"Rider ({clients.Count})";
+        RidersTitle.Text = Loc.T("RidersCount", clients.Count);
         NoRidersLabel.IsVisible = clients.Count == 0;
         BindableLayout.SetItemsSource(RidersList, clients);
 
@@ -157,7 +155,7 @@ public partial class HostPage : ContentPage
     {
         bool isMuted = _intercom.IsMuted;
         MuteIcon.Text = isMuted ? Icons.MicOff : Icons.Mic;
-        MuteLabel.Text = isMuted ? "Stumm · tippen zum Sprechen" : "Mikrofon an · tippen zum Stummschalten";
+        MuteLabel.Text = Loc.T(isMuted ? "MutedHint" : "UnmutedHint");
         MuteCircle.BackgroundColor = (Color)Application.Current!.Resources[isMuted ? "WrSurfaceHigh" : "WrAccent"];
         MuteIcon.TextColor = (Color)Application.Current.Resources[isMuted ? "WrText" : "WrOnAccent"];
     }
@@ -192,7 +190,7 @@ public partial class HostPage : ContentPage
     {
         if (IsHosting)
         {
-            if (!await DisplayAlertAsync("Gruppe beenden?", "Alle Rider werden getrennt.", "Beenden", "Abbrechen"))
+            if (!await DisplayAlertAsync(Loc.T("HostLeaveTitle"), Loc.T("HostLeaveText"), Loc.T("End"), Loc.T("Cancel")))
                 return;
 
             await _intercom.StopAsync();

@@ -27,12 +27,12 @@
 
         <Grid RowDefinitions="Auto,*,Auto" Padding="20,16">
             <Grid ColumnDefinitions="*,Auto" Margin="0,8,0,0">
-                <Label Text="QR-Code scannen" Style="{StaticResource WrTitle}" />
+                <Label Text="{app:Tr QrScanTitle}" Style="{StaticResource WrTitle}" />
                 <Button Grid.Column="1" Text="{x:Static app:Icons.Close}" Style="{StaticResource WrIconButton}" Clicked="OnCloseClicked" />
             </Grid>
 
             <Border Grid.Row="2" Style="{StaticResource WrCard}" Margin="0,0,0,16">
-                <Label Text="Halte die Kamera auf den QR-Code auf dem Host-Handy."
+                <Label Text="{app:Tr QrScanHint}"
                        Style="{StaticResource WrBody}"
                        HorizontalTextAlignment="Center" />
             </Border>

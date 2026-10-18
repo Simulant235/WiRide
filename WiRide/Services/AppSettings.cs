@@ -57,6 +57,27 @@ public static class AppSettings
         set => Preferences.Set(nameof(UseOpus), value);
     }
 
+    public const string SystemLanguage = "system";
+
+    public static string Language
+    {
+        get => Preferences.Get(nameof(Language), SystemLanguage);
+        set => Preferences.Set(nameof(Language), value);
+    }
+
+    public static ThemeChoice Theme
+    {
+        get => (ThemeChoice)Preferences.Get(nameof(Theme), (int)ThemeChoice.System);
+        set => Preferences.Set(nameof(Theme), (int)value);
+    }
+
+    // Index in ThemeManager.FontScales (1 = normal)
+    public static int FontScaleIndex
+    {
+        get => Preferences.Get(nameof(FontScaleIndex), 1);
+        set => Preferences.Set(nameof(FontScaleIndex), value);
+    }
+
     public static PasswordCharset PasswordCharset
     {
         get => (PasswordCharset)Preferences.Get(nameof(PasswordCharset), (int)PasswordCharset.LettersAndDigits);

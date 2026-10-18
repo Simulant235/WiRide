@@ -16,7 +16,7 @@ public partial class StartPage : ContentPage
     protected override void OnAppearing()
     {
         base.OnAppearing();
-        GreetingLabel.Text = $"Hallo {AppSettings.RiderName} 👋";
+        GreetingLabel.Text = Loc.T("StartGreeting", AppSettings.RiderName);
     }
 
     private async void OnHostButtonClicked(object? sender, EventArgs e)

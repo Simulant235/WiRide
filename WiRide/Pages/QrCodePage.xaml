@@ -8,7 +8,7 @@
 
     <Grid RowDefinitions="Auto,*" Padding="20,16">
         <Grid ColumnDefinitions="*,Auto" Margin="0,8,0,16">
-            <Label Text="Gruppe beitreten" Style="{StaticResource WrTitle}" />
+            <Label Text="{app:Tr GroupJoin}" Style="{StaticResource WrTitle}" />
             <Button Grid.Column="1" Text="{x:Static app:Icons.Close}" Style="{StaticResource WrIconButton}" Clicked="OnCloseClicked" />
         </Grid>
 
@@ -26,7 +26,7 @@
                                             Margin="0" />
             </Border>
 
-            <Label Text="In WiRide auf das Kamera-Symbol tippen oder mit der normalen Handy-Kamera scannen."
+            <Label Text="{app:Tr QrHint}"
                    Style="{StaticResource WrCaption}"
                    HorizontalTextAlignment="Center"
                    Margin="20,0" />

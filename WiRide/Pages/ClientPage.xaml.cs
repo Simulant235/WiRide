@@ -50,8 +50,7 @@ public partial class ClientPage : ContentPage
         var host = await DiscoverAsync();
         if (host == null)
         {
-            await DisplayAlertAsync("Kein Host gefunden",
-                "Bist du im WLAN des Hosts? Am einfachsten geht es per QR-Code.", "OK");
+            await DisplayAlertAsync(Loc.T("ClientNoHostTitle"), Loc.T("ClientNoHostText"), Loc.T("Ok"));
             return;
         }
 
@@ -64,17 +63,17 @@ public partial class ClientPage : ContentPage
         if (ssid == null)
             return;
 
-        var password = await DisplayPromptAsync(ssid, "WLAN-Passwort (steht auf dem Host-Handy):",
-            "Verbinden", "Abbrechen");
+        var password = await DisplayPromptAsync(ssid, Loc.T("ClientWifiPasswordPrompt"),
+            Loc.T("Connect"), Loc.T("Cancel"));
         if (password != null)
             await JoinWifiAndConnectAsync(ssid, password);
     });
 
     private async void OnManualIpTapped(object? sender, TappedEventArgs e) => await RunBusyAsync(async () =>
     {
-        var ip = await DisplayPromptAsync("Host-IP",
-            "IP-Adresse des Hosts (steht auf dem Host-Handy):",
-            "Verbinden", "Abbrechen",
+        var ip = await DisplayPromptAsync(Loc.T("ClientIpTitle"),
+            Loc.T("ClientIpPrompt"),
+            Loc.T("Connect"), Loc.T("Cancel"),
             placeholder: "192.168.49.1",
             initialValue: AppSettings.LastHostIp,
             keyboard: Keyboard.Numeric);
@@ -105,7 +104,7 @@ public partial class ClientPage : ContentPage
         }
         catch (Exception ex)
         {
-            await DisplayAlertAsync("Fehler", $"Verbindung fehlgeschlagen: {ex.Message}", "OK");
+            await DisplayAlertAsync(Loc.T("Error"), Loc.T("ConnectFailed", ex.Message), Loc.T("Ok"));
         }
         finally
         {
@@ -120,10 +119,10 @@ public partial class ClientPage : ContentPage
     {
         if (_wifi.CurrentNetworkSsid != ssid)
         {
-            SetStatus("Verbinde mit WLAN...", ssid);
+            SetStatus(Loc.T("ClientWifiConnecting"), ssid);
             if (!await _wifi.ConnectToNetworkAsync(ssid, password))
             {
-                await DisplayAlertAsync("WLAN", $"Verbindung mit „{ssid}“ fehlgeschlagen. Stimmt das Passwort?", "OK");
+                await DisplayAlertAsync(Loc.T("Wifi"), Loc.T("ClientWifiFailed", ssid), Loc.T("Ok"));
                 return;
             }
         }
@@ -135,7 +134,7 @@ public partial class ClientPage : ContentPage
 
         if (host == null)
         {
-            await DisplayAlertAsync("Kein Host gefunden", "Im WLAN wurde kein WiRide-Host gefunden. Läuft die Gruppe auf dem Host?", "OK");
+            await DisplayAlertAsync(Loc.T("ClientNoHostTitle"), Loc.T("ClientNoHostInWifi"), Loc.T("Ok"));
             return;
         }
 
@@ -144,7 +143,7 @@ public partial class ClientPage : ContentPage
 
     private async Task<DiscoveredHost?> DiscoverAsync()
     {
-        SetStatus("Suche Host...", "Das dauert nur ein paar Sekunden.");
+        SetStatus(Loc.T("ClientSearching"), Loc.T("ClientSearchingDetail"));
 
         var extraTargets = new List<string>();
         if (_wifi.GatewayIp is { } gateway)
@@ -156,16 +155,16 @@ public partial class ClientPage : ContentPage
         if (hosts.Count <= 1)
             return hosts.FirstOrDefault();
 
-        var choice = await DisplayActionSheetAsync("Host wählen", "Abbrechen", null,
+        var choice = await DisplayActionSheetAsync(Loc.T("ClientChooseHost"), Loc.T("Cancel"), null,
             hosts.Select(h => $"{h.Name} ({h.IpAddress})").ToArray());
         return hosts.FirstOrDefault(h => choice == $"{h.Name} ({h.IpAddress})");
     }
 
     private async Task ConnectToHostAsync(DiscoveredHost host)
     {
-        SetStatus($"Verbinde mit {host.Name}...", host.IpAddress);
+        SetStatus(Loc.T("ClientConnectingTo", host.Name), host.IpAddress);
         if (!await _intercom.StartClientAsync(host.IpAddress))
-            await DisplayAlertAsync("Verbindung", $"Host {host.IpAddress} antwortet nicht.", "OK");
+            await DisplayAlertAsync(Loc.T("Connection"), Loc.T("ClientHostNoAnswer", host.IpAddress), Loc.T("Ok"));
     }
 
     // ---------------- Anzeige ----------------
@@ -190,20 +189,20 @@ public partial class ClientPage : ContentPage
         {
             StatusDot.Fill = (Color)resources["WrTextMuted"];
             if (!_busy)
-                SetStatus("Nicht verbunden", "Scanne den QR-Code auf dem Host-Handy, das ist der schnellste Weg.");
+                SetStatus(Loc.T("ClientNotConnected"), Loc.T("ClientScanHint"));
             return;
         }
 
         if (network.IsConnected)
         {
             StatusDot.Fill = (Color)resources["WrSuccess"];
-            SetStatus($"Verbunden mit {network.HostName ?? network.HostIp}",
-                network.LatencyMs > 0 ? $"Netzwerk-Ping {network.LatencyMs} ms" : "Verbindung steht");
+            SetStatus(Loc.T("ClientConnectedTo", network.HostName ?? network.HostIp),
+                network.LatencyMs > 0 ? Loc.T("ClientPing", network.LatencyMs) : Loc.T("ClientConnectionOk"));
         }
         else
         {
             StatusDot.Fill = (Color)resources["WrAccent"];
-            SetStatus("Verbindung verloren", "Verbinde automatisch neu...");
+            SetStatus(Loc.T("ClientLost"), Loc.T("ClientReconnecting"));
         }
 
         UpdateMuteUi();
@@ -214,7 +213,7 @@ public partial class ClientPage : ContentPage
         bool isMuted = _intercom.IsMuted;
         var resources = Application.Current!.Resources;
         MuteIcon.Text = isMuted ? Icons.MicOff : Icons.Mic;
-        MuteLabel.Text = isMuted ? "Stumm · tippen zum Sprechen" : "Mikrofon an · tippen zum Stummschalten";
+        MuteLabel.Text = Loc.T(isMuted ? "MutedHint" : "UnmutedHint");
         MuteCircle.BackgroundColor = (Color)resources[isMuted ? "WrSurfaceHigh" : "WrAccent"];
         MuteIcon.TextColor = (Color)resources[isMuted ? "WrText" : "WrOnAccent"];
     }
@@ -248,7 +247,7 @@ public partial class ClientPage : ContentPage
     {
         if (InSession)
         {
-            if (!await DisplayAlertAsync("Gruppe verlassen?", "Die Verbindung zum Host wird getrennt.", "Verlassen", "Abbrechen"))
+            if (!await DisplayAlertAsync(Loc.T("ClientLeaveTitle"), Loc.T("ClientLeaveText"), Loc.T("Leave"), Loc.T("Cancel")))
                 return;
 
             await _intercom.StopAsync();

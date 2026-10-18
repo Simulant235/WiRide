@@ -70,7 +70,7 @@ public class IntercomService
         _mixCts = new CancellationTokenSource();
         _ = Task.Run(() => MixLoopAsync(_mixCts.Token));
 
-        StartBackgroundMode($"Host: {AppSettings.RiderName}");
+        StartBackgroundMode(Loc.T("NotifHost", AppSettings.RiderName));
         RaiseStateChanged();
     }
 
@@ -87,7 +87,7 @@ public class IntercomService
         Role = IntercomRole.Client;
         await StartAudioAsync();
 
-        StartBackgroundMode($"Verbunden mit {_network.HostName ?? hostIp}");
+        StartBackgroundMode(Loc.T("ClientConnectedTo", _network.HostName ?? hostIp));
         RaiseStateChanged();
         return true;
     }

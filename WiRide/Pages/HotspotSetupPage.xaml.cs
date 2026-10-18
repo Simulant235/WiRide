@@ -43,7 +43,7 @@ public partial class HotspotSetupPage : ContentPage
         AutoCard.Stroke = _mode == HotspotMode.Automatic ? accent : Colors.Transparent;
         ManualCard.Stroke = _mode == HotspotMode.Manual ? accent : Colors.Transparent;
         PasswordSection.IsVisible = _mode == HotspotMode.Automatic;
-        StartButton.Text = _mode == HotspotMode.Automatic ? "Gruppe starten" : "Hotspot-Einstellungen öffnen";
+        StartButton.Text = Loc.T(_mode == HotspotMode.Automatic ? "GroupStart" : "SetupOpenHotspotSettings");
         ValidatePassword();
     }
 
@@ -56,7 +56,7 @@ public partial class HotspotSetupPage : ContentPage
         }
 
         var error = PasswordGenerator.Validate(PasswordEntry.Text);
-        PasswordHint.Text = error ?? $"{PasswordEntry.Text.Length} Zeichen · Tippe auf ↻ für ein neues Passwort";
+        PasswordHint.Text = error ?? Loc.T("SetupPasswordInfo", PasswordEntry.Text.Length);
         PasswordHint.TextColor = error == null
             ? (Color)Application.Current!.Resources["WrTextMuted"]
             : (Color)Application.Current!.Resources["WrDanger"];
