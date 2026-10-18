@@ -37,6 +37,7 @@ public class UdpNetworkService : INetworkService
     public event EventHandler<string>? ClientDisconnected;
     public event EventHandler<bool>? ConnectionStateChanged;
     public event EventHandler<int>? LatencyUpdated;
+    public event EventHandler<GroupEvent>? GroupEventReceived;
 
     public string LocalId => _localId.ToString("N");
     public bool IsHost => _isHost;
@@ -282,7 +283,28 @@ public class UdpNetworkService : INetworkService
 
     // ---------------- Gemeinsam ----------------
 
-    public void SendAudio(byte[] audioData, AudioCodecType codec, string? clientId = null)
+    public void SendEvent(GroupEventCode code, string riderName, string? exceptClientId = null)
+    {
+        if (!_isConnected)
+            return;
+
+        var message = new NetworkMessage { Type = MessageType.Event, SenderId = _localId, EventCode = code, Name = riderName };
+
+        if (!_isHost)
+        {
+            if (_hostEndPoint != null)
+                Send(message, _hostEndPoint);
+            return;
+        }
+
+        foreach (var client in _clients.Values)
+        {
+            if (client.ClientId != exceptClientId && client.EndPoint != null)
+                Send(message, client.EndPoint);
+        }
+    }
+
+    public void SendAudio(byte[] audioData, AudioCodecType codec, string? clientId = null, bool isMusic = false)
     {
         if (!_isConnected)
             return;
@@ -304,7 +326,7 @@ public class UdpNetworkService : INetworkService
 
         Send(new NetworkMessage
         {
-            Type = MessageType.Audio,
+            Type = isMusic ? MessageType.Music : MessageType.Audio,
             SenderId = _localId,
             Sequence = Interlocked.Increment(ref _sequence),
             Codec = codec,
@@ -407,13 +429,24 @@ public class UdpNetworkService : INetworkService
                 }
                 break;
 
+            case MessageType.Event:
+                if (_clients.TryGetValue(clientId, out var eventSender))
+                {
+                    // Lokal ansagen und an alle anderen weiterleiten
+                    GroupEventReceived?.Invoke(this, new GroupEvent(message.EventCode, message.Name, clientId));
+                    SendEvent(message.EventCode, message.Name, exceptClientId: eventSender.ClientId);
+                }
+                break;
+
             case MessageType.Audio:
+            case MessageType.Music:
                 if (_clients.TryGetValue(clientId, out var sender))
                 {
                     sender.LastSeen = DateTime.UtcNow;
                     AudioPacketReceived?.Invoke(this, new AudioPacket
                     {
                         ClientId = clientId,
+                        IsMusic = message.Type == MessageType.Music,
                         AudioData = message.Data,
                         Codec = message.Codec,
                         SequenceNumber = message.Sequence,
@@ -439,6 +472,11 @@ public class UdpNetworkService : INetworkService
             case MessageType.Pong:
                 _latencyMs = (int)(Now - message.Timestamp);
                 LatencyUpdated?.Invoke(this, _latencyMs);
+                break;
+
+            case MessageType.Event:
+                if (_isConnected)
+                    GroupEventReceived?.Invoke(this, new GroupEvent(message.EventCode, message.Name, message.SenderId.ToString("N")));
                 break;
 
             case MessageType.Audio:

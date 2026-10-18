@@ -47,6 +47,36 @@ public class AndroidAudioService : IAudioService
     public bool IsPlaying => _isPlaying;
     public int MaxQueuedChunks { get; set; } = 3000; // 60 s, Intercom setzt kleiner
 
+    private AudioFocusRequestClass? _duckRequest;
+
+    public void SetDuckOthers(bool duck)
+    {
+        if (!OperatingSystem.IsAndroidVersionAtLeast(26))
+            return;
+
+        var manager = global::Android.App.Application.Context.GetSystemService(global::Android.Content.Context.AudioService) as AudioManager;
+        if (manager == null)
+            return;
+
+        if (duck && _duckRequest == null)
+        {
+            // "Transient may duck": andere Apps werden leiser statt zu pausieren
+            _duckRequest = new AudioFocusRequestClass.Builder(AudioFocus.GainTransientMayDuck)
+                .SetAudioAttributes(new AudioAttributes.Builder()!
+                    .SetUsage(AudioUsageKind.AssistanceNavigationGuidance)!
+                    .SetContentType(AudioContentType.Speech)!
+                    .Build()!)
+                .SetWillPauseWhenDucked(false)
+                .Build();
+            manager.RequestAudioFocus(_duckRequest);
+        }
+        else if (!duck && _duckRequest != null)
+        {
+            manager.AbandonAudioFocusRequest(_duckRequest);
+            _duckRequest = null;
+        }
+    }
+
     public Task StartRecordingAsync()
     {
         if (_isRecording)

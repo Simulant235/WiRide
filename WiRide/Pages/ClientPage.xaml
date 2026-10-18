@@ -85,6 +85,7 @@
                     </Border>
                     <Label x:Name="MuteLabel" Style="{StaticResource WrCaption}" HorizontalTextAlignment="Center" />
                 </VerticalStackLayout>
+                <ContentView x:Name="QuickHost" IsVisible="False" />
             </VerticalStackLayout>
         </ScrollView>
 

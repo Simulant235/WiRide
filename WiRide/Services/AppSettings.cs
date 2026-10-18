@@ -125,6 +125,63 @@ public static class AppSettings
         set => Preferences.Set(nameof(VoiceActivationSensitivity), Math.Clamp(value, 0, 1));
     }
 
+    // ---- Ansagen & Musik ----
+
+    public static bool AnnouncementsEnabled
+    {
+        get => Preferences.Get(nameof(AnnouncementsEnabled), true);
+        set => Preferences.Set(nameof(AnnouncementsEnabled), value);
+    }
+
+    public static double AnnouncementVolume
+    {
+        get => Preferences.Get(nameof(AnnouncementVolume), 0.9);
+        set => Preferences.Set(nameof(AnnouncementVolume), Math.Clamp(value, 0, 1));
+    }
+
+    public static bool AnnounceRiders
+    {
+        get => Preferences.Get(nameof(AnnounceRiders), true);
+        set => Preferences.Set(nameof(AnnounceRiders), value);
+    }
+
+    public static bool AnnounceConnection
+    {
+        get => Preferences.Get(nameof(AnnounceConnection), true);
+        set => Preferences.Set(nameof(AnnounceConnection), value);
+    }
+
+    public static VoiceEngine VoiceEngine
+    {
+        get => (VoiceEngine)Preferences.Get(nameof(VoiceEngine), (int)VoiceEngine.System);
+        set => Preferences.Set(nameof(VoiceEngine), (int)value);
+    }
+
+    // Fuer welche Sprache zuletzt nach dem KI-Stimmen-Download gefragt wurde
+    public static string PiperPromptedLanguage
+    {
+        get => Preferences.Get(nameof(PiperPromptedLanguage), string.Empty);
+        set => Preferences.Set(nameof(PiperPromptedLanguage), value);
+    }
+
+    public static bool DuckingEnabled
+    {
+        get => Preferences.Get(nameof(DuckingEnabled), true);
+        set => Preferences.Set(nameof(DuckingEnabled), value);
+    }
+
+    public static bool QuickMessagesEnabled
+    {
+        get => Preferences.Get(nameof(QuickMessagesEnabled), true);
+        set => Preferences.Set(nameof(QuickMessagesEnabled), value);
+    }
+
+    public static bool MusicSharingEnabled
+    {
+        get => Preferences.Get(nameof(MusicSharingEnabled), false);
+        set => Preferences.Set(nameof(MusicSharingEnabled), value);
+    }
+
     public static PasswordCharset PasswordCharset
     {
         get => (PasswordCharset)Preferences.Get(nameof(PasswordCharset), (int)PasswordCharset.LettersAndDigits);

@@ -183,6 +183,7 @@ public partial class ClientPage : ContentPage
 
         ConnectSection.IsVisible = !inSession;
         MuteSection.IsVisible = inSession;
+        UpdateQuickMessages(inSession);
         DisconnectButton.IsVisible = inSession;
 
         if (!inSession)
@@ -206,6 +207,18 @@ public partial class ClientPage : ContentPage
         }
 
         UpdateMuteUi();
+    }
+
+    // Schnell-Ansagen und Musik nur waehrend einer Sitzung anzeigen
+    private void UpdateQuickMessages(bool inSession)
+    {
+        QuickHost.IsVisible = inSession;
+        if (!inSession)
+            QuickHost.Content = null;
+        else if (QuickHost.Content is QuickMessagesView view)
+            view.Refresh();
+        else
+            QuickHost.Content = new QuickMessagesView();
     }
 
     private void UpdateMuteUi()

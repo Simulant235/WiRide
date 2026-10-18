@@ -129,6 +129,7 @@ public partial class HostPage : ContentPage
         IdleHint.IsVisible = !hosting;
         NetworkInfo.IsVisible = hosting;
         MuteSection.IsVisible = hosting;
+        UpdateQuickMessages(hosting);
         RidersSection.IsVisible = hosting;
 
         StartStopButton.Text = Loc.T(hosting ? "GroupStop" : "GroupStart");
@@ -149,6 +150,18 @@ public partial class HostPage : ContentPage
         BindableLayout.SetItemsSource(RidersList, clients);
 
         UpdateMuteUi();
+    }
+
+    // Schnell-Ansagen und Musik nur waehrend einer Sitzung anzeigen
+    private void UpdateQuickMessages(bool inSession)
+    {
+        QuickHost.IsVisible = inSession;
+        if (!inSession)
+            QuickHost.Content = null;
+        else if (QuickHost.Content is QuickMessagesView view)
+            view.Refresh();
+        else
+            QuickHost.Content = new QuickMessagesView();
     }
 
     private void UpdateMuteUi()

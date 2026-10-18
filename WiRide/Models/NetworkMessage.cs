@@ -9,7 +9,25 @@ public enum MessageType : byte
     Leave,          // Client -> Host: Verlassen
     Audio,          // Audio-Frame (beide Richtungen)
     Ping,           // Client -> Host: KeepAlive + Latenzmessung
-    Pong            // Host -> Client: Antwort auf Ping
+    Pong,           // Host -> Client: Antwort auf Ping
+    Event,          // Ereignis/Schnell-Ansage (Client -> Host -> alle)
+    Music           // Geteilte Musik (wie Audio, eigener Kanal)
+}
+
+// Sprachunabhaengige Ereignis-Codes; jedes Handy sagt sie in seiner eigenen Sprache an
+public enum GroupEventCode : byte
+{
+    RiderJoined = 1,
+    RiderLeft = 2,
+    Pause = 10,
+    Fuel = 11,
+    Police = 12,
+    Danger = 13,
+    SlowDown = 14,
+    TurnLeft = 15,
+    TurnRight = 16,
+    WaitForMe = 17,
+    AllGood = 18
 }
 
 public enum AudioCodecType : byte
@@ -43,6 +61,9 @@ public class NetworkMessage
     public int LatencyMs { get; set; }
 
     // Ping-Zusatzinfos (optional, aeltere Versionen senden sie nicht)
+    // Event
+    public GroupEventCode EventCode { get; set; }
+
     public byte NormalizeStrength { get; set; }   // 0 = aus, 1-100 = Staerke der Normalisierung fuer den eigenen Mix
     public sbyte BatteryPercent { get; set; } = -1; // -1 = unbekannt
     public short SignalDbm { get; set; }            // 0 = unbekannt
@@ -67,7 +88,13 @@ public class NetworkMessage
                 writer.Write(Name);
                 break;
 
+            case MessageType.Event:
+                writer.Write((byte)EventCode);
+                writer.Write(Name);
+                break;
+
             case MessageType.Audio:
+            case MessageType.Music:
                 writer.Write(Sequence);
                 writer.Write((byte)Codec);
                 writer.Write(Data);
@@ -115,7 +142,13 @@ public class NetworkMessage
                     message.Name = reader.ReadString();
                     break;
 
+                case MessageType.Event:
+                    message.EventCode = (GroupEventCode)reader.ReadByte();
+                    message.Name = reader.ReadString();
+                    break;
+
                 case MessageType.Audio:
+                case MessageType.Music:
                     message.Sequence = reader.ReadInt32();
                     message.Codec = (AudioCodecType)reader.ReadByte();
                     message.Data = reader.ReadBytes(buffer.Length - HeaderSize - 5);

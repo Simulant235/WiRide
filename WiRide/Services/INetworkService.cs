@@ -9,6 +9,7 @@ public interface INetworkService
     event EventHandler<string>? ClientDisconnected;
     event EventHandler<bool>? ConnectionStateChanged;
     event EventHandler<int>? LatencyUpdated;
+    event EventHandler<GroupEvent>? GroupEventReceived;
 
     Task StartHostAsync(int port);
     Task StopHostAsync();
@@ -17,7 +18,10 @@ public interface INetworkService
     Task DisconnectAsync();
 
     // Host: an clientId senden. Client: clientId ignorieren und an Host senden.
-    void SendAudio(byte[] audioData, AudioCodecType codec, string? clientId = null);
+    void SendAudio(byte[] audioData, AudioCodecType codec, string? clientId = null, bool isMusic = false);
+
+    // Host: an alle Clients (ausser exceptClientId). Client: an Host, der an alle weiterleitet.
+    void SendEvent(GroupEventCode code, string riderName, string? exceptClientId = null);
 
     string LocalId { get; }
     bool IsHost { get; }
