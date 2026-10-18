@@ -14,10 +14,11 @@
 | v0.7.0 | Opus-Codec |
 | v0.8.0 | Hintergrundbetrieb (Foreground-Service) |
 | v0.8.1 | Dokumentation aktualisiert |
+| v1.0.0 | Erste nutzbare Version: alle Grundfunktionen fertig |
 
-## Nächster Schritt: v1.0.0
+## Praxistest v1.0.0
 
-Alle Grundfunktionen sind implementiert. Für **v1.0.0** fehlt nur der Praxistest auf echten Geräten:
+Alle Grundfunktionen sind implementiert. Offene Praxistests auf echten Geräten:
 
 - [ ] Host + 2 Clients auf echten Android-Geräten (Hotspot, Suche, Audio, Mix-Minus)
 - [ ] Latenz messen (Ziel: < 150 ms Ende-zu-Ende)

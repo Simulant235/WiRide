@@ -1,6 +1,6 @@
 # WiRide - Offline Motorcycle Intercom App
 
-Version 0.8.1 · .NET MAUI 10 · Android
+Version 1.0.0 · .NET MAUI 10 · Android
 
 ## 🎯 Überblick
 
