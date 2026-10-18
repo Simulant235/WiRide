@@ -63,12 +63,12 @@ public class IntercomForegroundService : Service
             : null;
 
         var notification = new NotificationCompat.Builder(this, ChannelId)
-            .SetContentTitle("WiRide Intercom aktiv")!
+            .SetContentTitle(Loc.T("NotifTitle"))!
             .SetContentText(intent?.GetStringExtra(ExtraText) ?? string.Empty)!
             .SetSmallIcon(Resource.Mipmap.appicon)!
             .SetOngoing(true)!
             .SetContentIntent(pendingIntent)!
-            .AddAction(0, "Beenden", stopPending)!
+            .AddAction(0, Loc.T("End"), stopPending)!
             .Build()!;
 
         if (Build.VERSION.SdkInt >= BuildVersionCodes.Q)
@@ -103,9 +103,9 @@ public class IntercomForegroundService : Service
         if (Build.VERSION.SdkInt < BuildVersionCodes.O)
             return;
 
-        var channel = new NotificationChannel(ChannelId, "Intercom", NotificationImportance.Low)
+        var channel = new NotificationChannel(ChannelId, Loc.T("NotifChannel"), NotificationImportance.Low)
         {
-            Description = "Laufende WiRide-Intercom-Sitzung"
+            Description = Loc.T("NotifChannelDesc")
         };
         (GetSystemService(NotificationService) as NotificationManager)?.CreateNotificationChannel(channel);
     }

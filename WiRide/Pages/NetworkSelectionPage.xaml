@@ -8,13 +8,13 @@
     <Grid RowDefinitions="Auto,Auto,*" Padding="20,16">
 
         <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10" Margin="0,8,0,8">
-            <Label Text="WLAN wählen" Style="{StaticResource WrTitle}" />
+            <Label Text="{app:Tr NetSelTitle}" Style="{StaticResource WrTitle}" />
             <Button x:Name="RefreshButton" Grid.Column="1" Text="{x:Static app:Icons.Refresh}" Style="{StaticResource WrIconButton}" Clicked="OnRefreshClicked" />
             <Button Grid.Column="2" Text="{x:Static app:Icons.Close}" Style="{StaticResource WrIconButton}" Clicked="OnCancelClicked" />
         </Grid>
 
         <Label Grid.Row="1"
-               Text="WiRide-Gruppen beginnen mit „DIRECT-WR“. Netzwerke des Hosts stehen oben."
+               Text="{app:Tr NetSelHint}"
                Style="{StaticResource WrCaption}"
                Margin="4,0,0,12" />
 
@@ -40,7 +40,7 @@
             </CollectionView>
 
             <Label x:Name="NoNetworksLabel"
-                   Text="Keine Netzwerke gefunden. Ist der Host gestartet und WLAN eingeschaltet?"
+                   Text="{app:Tr NetSelNone}"
                    Style="{StaticResource WrCaption}"
                    HorizontalTextAlignment="Center"
                    VerticalOptions="Center"

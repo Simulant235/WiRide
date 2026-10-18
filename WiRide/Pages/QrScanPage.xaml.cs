@@ -31,7 +31,7 @@ public partial class QrScanPage : ContentPage
 
         if (status != PermissionStatus.Granted)
         {
-            await owner.DisplayAlertAsync("Kamera", "Zum Scannen wird die Kamera-Berechtigung benötigt.", "OK");
+            await owner.DisplayAlertAsync(Loc.T("Camera"), Loc.T("CameraPermission"), Loc.T("Ok"));
             return null;
         }
 

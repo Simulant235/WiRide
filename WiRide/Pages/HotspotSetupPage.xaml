@@ -9,7 +9,7 @@
 
         <!-- Kopfzeile -->
         <Grid ColumnDefinitions="*,Auto" Margin="0,8,0,16">
-            <Label Text="Netzwerk für die Gruppe" Style="{StaticResource WrTitle}" />
+            <Label Text="{app:Tr SetupTitle}" Style="{StaticResource WrTitle}" />
             <Button Grid.Column="1" Text="{x:Static app:Icons.Close}" Style="{StaticResource WrIconButton}" Clicked="OnCancelClicked" />
         </Grid>
 
@@ -26,8 +26,8 @@
                             <Label Text="{x:Static app:Icons.WifiTethering}" Style="{StaticResource WrIcon}" TextColor="{StaticResource WrAccent}" />
                         </Border>
                         <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
-                            <Label Text="Automatisch (empfohlen)" Style="{StaticResource WrBody}" FontAttributes="Bold" />
-                            <Label Text="WiRide erstellt das WLAN, du legst das Passwort fest." Style="{StaticResource WrCaption}" />
+                            <Label Text="{app:Tr SetupAuto}" Style="{StaticResource WrBody}" FontAttributes="Bold" />
+                            <Label Text="{app:Tr SetupAutoDesc}" Style="{StaticResource WrCaption}" />
                         </VerticalStackLayout>
                     </Grid>
                 </Border>
@@ -42,15 +42,15 @@
                             <Label Text="{x:Static app:Icons.Router}" Style="{StaticResource WrIcon}" />
                         </Border>
                         <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
-                            <Label Text="Eigener Hotspot" Style="{StaticResource WrBody}" FontAttributes="Bold" />
-                            <Label Text="Du schaltest den Handy-Hotspot selbst in den Android-Einstellungen ein." Style="{StaticResource WrCaption}" />
+                            <Label Text="{app:Tr OwnHotspot}" Style="{StaticResource WrBody}" FontAttributes="Bold" />
+                            <Label Text="{app:Tr SetupOwnDesc}" Style="{StaticResource WrCaption}" />
                         </VerticalStackLayout>
                     </Grid>
                 </Border>
 
                 <!-- Passwort (nur Automatisch) -->
                 <VerticalStackLayout x:Name="PasswordSection" Spacing="8" Margin="0,8,0,0">
-                    <Label Text="WLAN-Passwort" Style="{StaticResource WrSectionTitle}" />
+                    <Label Text="{app:Tr SetupPassword}" Style="{StaticResource WrSectionTitle}" />
                     <Border Style="{StaticResource WrCard}" Padding="14,6">
                         <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
                             <Label Text="{x:Static app:Icons.Lock}" Style="{StaticResource WrIcon}" FontSize="22" TextColor="{StaticResource WrTextMuted}" />
@@ -74,7 +74,7 @@
 
         <Button x:Name="StartButton"
                 Grid.Row="2"
-                Text="Gruppe starten"
+                Text="{app:Tr GroupStart}"
                 Style="{StaticResource WrPrimaryButton}"
                 Clicked="OnStartClicked"
                 Margin="0,12,0,8" />

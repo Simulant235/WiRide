@@ -12,7 +12,7 @@ public static class PermissionHelper
             micStatus = await Permissions.RequestAsync<Permissions.Microphone>();
             if (micStatus != PermissionStatus.Granted)
             {
-                await page.DisplayAlertAsync("Berechtigung", "Mikrofon-Berechtigung wird benoetigt", "OK");
+                await page.DisplayAlertAsync(Loc.T("Permission"), Loc.T("PermMic"), Loc.T("Ok"));
                 return false;
             }
         }
@@ -24,7 +24,7 @@ public static class PermissionHelper
             locStatus = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
             if (locStatus != PermissionStatus.Granted)
             {
-                await page.DisplayAlertAsync("Berechtigung", "Standort-Berechtigung wird fuer WiFi benoetigt", "OK");
+                await page.DisplayAlertAsync(Loc.T("Permission"), Loc.T("PermLocation"), Loc.T("Ok"));
                 return false;
             }
         }

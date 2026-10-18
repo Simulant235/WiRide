@@ -7,6 +7,10 @@ namespace WiRide
         public App()
         {
             InitializeComponent();
+
+            Services.Loc.Initialize();
+            Services.ThemeManager.Apply();
+            RequestedThemeChanged += (_, _) => Services.ThemeManager.Apply();
         }
 
         protected override Window CreateWindow(IActivationState? activationState)

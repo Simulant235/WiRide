@@ -59,13 +59,13 @@ public class AndroidWiFiService : IWiFiService
 
         if (_wifiManager == null || Build.VERSION.SdkInt < BuildVersionCodes.O)
         {
-            LastError = "Dieses Geraet unterstuetzt keinen App-Hotspot.";
+            LastError = Loc.T("ErrNoHotspotSupport");
             return null;
         }
 
         if (!_wifiManager.IsWifiEnabled)
         {
-            LastError = "Bitte zuerst WLAN einschalten (es muss nicht verbunden sein).";
+            LastError = Loc.T("ErrWifiOff");
             return null;
         }
 
@@ -80,7 +80,7 @@ public class AndroidWiFiService : IWiFiService
         // Fallback: LocalOnlyHotspot (Passwort vergibt Android)
         _hotspot = await StartLocalOnlyHotspotAsync();
         if (_hotspot == null)
-            LastError ??= "Hotspot konnte nicht gestartet werden. Ist der Standort eingeschaltet?";
+            LastError ??= Loc.T("ErrHotspotFailed");
         return _hotspot;
     }
 

@@ -10,7 +10,7 @@
         <!-- Kopfzeile -->
         <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12" Margin="0,8,0,16">
             <Button Text="{x:Static app:Icons.ArrowBack}" Style="{StaticResource WrIconButton}" Clicked="OnBackClicked" />
-            <Label Grid.Column="1" Text="Gruppe hosten" Style="{StaticResource WrTitle}" />
+            <Label Grid.Column="1" Text="{app:Tr HostTitle}" Style="{StaticResource WrTitle}" />
             <Button Grid.Column="2" Text="{x:Static app:Icons.Settings}" Style="{StaticResource WrIconButton}" Clicked="OnSettingsClicked" />
         </Grid>
 
@@ -22,11 +22,11 @@
                     <VerticalStackLayout Spacing="14">
                         <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
                             <Ellipse x:Name="StatusDot" WidthRequest="12" HeightRequest="12" Fill="{StaticResource WrTextMuted}" VerticalOptions="Center" />
-                            <Label x:Name="StatusLabel" Grid.Column="1" Text="Bereit zum Starten" Style="{StaticResource WrBody}" FontAttributes="Bold" />
+                            <Label x:Name="StatusLabel" Grid.Column="1" Text="{app:Tr HostReady}" Style="{StaticResource WrBody}" FontAttributes="Bold" />
                         </Grid>
 
                         <Label x:Name="IdleHint"
-                               Text="Tippe unten auf „Gruppe starten“. Danach wählst du, wie das WLAN für die Gruppe bereitgestellt wird."
+                               Text="{app:Tr HostIdleHint}"
                                Style="{StaticResource WrCaption}" />
 
                         <Grid x:Name="NetworkInfo" RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="Auto,*" RowSpacing="10" ColumnSpacing="12" IsVisible="False">
@@ -39,7 +39,7 @@
                         </Grid>
 
                         <Button x:Name="QrButton"
-                                Text="QR-Code zum Beitreten"
+                                Text="{app:Tr HostQrButton}"
                                 Style="{StaticResource WrSecondaryButton}"
                                 ContentLayout="Left,10"
                                 Clicked="OnQrClicked"
@@ -67,13 +67,13 @@
                         </Border.GestureRecognizers>
                         <Label x:Name="MuteIcon" Text="{x:Static app:Icons.Mic}" Style="{StaticResource WrIcon}" FontSize="60" TextColor="{StaticResource WrOnAccent}" />
                     </Border>
-                    <Label x:Name="MuteLabel" Text="Mikrofon an" Style="{StaticResource WrCaption}" HorizontalTextAlignment="Center" />
+                    <Label x:Name="MuteLabel" Text="{app:Tr MicOn}" Style="{StaticResource WrCaption}" HorizontalTextAlignment="Center" />
                 </VerticalStackLayout>
 
                 <!-- Rider -->
                 <VerticalStackLayout x:Name="RidersSection" Spacing="8" IsVisible="False">
-                    <Label x:Name="RidersTitle" Text="Rider" Style="{StaticResource WrSectionTitle}" />
-                    <Label x:Name="NoRidersLabel" Text="Noch niemand verbunden. Zeig den anderen den QR-Code." Style="{StaticResource WrCaption}" Margin="4,0" />
+                    <Label x:Name="RidersTitle" Text="{app:Tr RidersTitle}" Style="{StaticResource WrSectionTitle}" />
+                    <Label x:Name="NoRidersLabel" Text="{app:Tr NoRiders}" Style="{StaticResource WrCaption}" Margin="4,0" />
                     <VerticalStackLayout x:Name="RidersList" Spacing="8">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate>
@@ -93,7 +93,7 @@
 
         <Button x:Name="StartStopButton"
                 Grid.Row="2"
-                Text="Gruppe starten"
+                Text="{app:Tr GroupStart}"
                 Style="{StaticResource WrPrimaryButton}"
                 Clicked="OnStartStopClicked"
                 Margin="0,12,0,8" />
