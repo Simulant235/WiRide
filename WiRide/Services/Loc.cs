@@ -25,6 +25,7 @@ public static class Loc
     private static Dictionary<string, string> _fallback = new();
 
     public static string CurrentCode { get; private set; } = "en";
+    public static bool IsRightToLeft => CurrentCode == "ar";
     public static CultureInfo CurrentCulture => new(CurrentCode == "no" ? "nb" : CurrentCode);
 
     // Nur Sprachen mit vorhandener Datei
