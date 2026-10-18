@@ -22,6 +22,9 @@ public partial class StartPage : ContentPage
         base.OnAppearing();
         GreetingLabel.Text = Loc.T("StartGreeting", AppSettings.RiderName);
         SetupQuickStart();
+
+        if (!AppSettings.OnboardingDone)
+            Dispatcher.Dispatch(async () => await Navigation.PushModalAsync(new OnboardingPage()));
     }
 
     protected override void OnDisappearing()

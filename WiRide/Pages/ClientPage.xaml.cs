@@ -121,6 +121,9 @@ public partial class ClientPage : ContentPage
             _permissionsChecked = true;
         }
 
+        if (!await PermissionHelper.ConfirmHeadsetAsync(this))
+            return;
+
         _busy = true;
         BusyIndicator.IsVisible = BusyIndicator.IsRunning = true;
         ConnectSection.IsEnabled = false;

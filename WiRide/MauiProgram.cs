@@ -41,11 +41,13 @@ namespace WiRide
             builder.Services.AddSingleton<IWiFiService, AndroidWiFiService>();
             builder.Services.AddSingleton<IPiperSynthesizer, AndroidPiperSynthesizer>();
             builder.Services.AddSingleton<IMusicCapture, AndroidMusicCapture>();
+            builder.Services.AddSingleton<IStatusSurface, AndroidStatusSurface>();
 #else
             // Platzhalter-Services fuer andere Plattformen
             builder.Services.AddSingleton<IAudioService, MockAudioService>();
             builder.Services.AddSingleton<IWiFiService, MockWiFiService>();
             builder.Services.AddSingleton<IMusicCapture, NoMusicCapture>();
+            builder.Services.AddSingleton<IStatusSurface, NoStatusSurface>();
 #endif
 
             builder.Services.AddSingleton<INetworkService, UdpNetworkService>();
@@ -54,6 +56,7 @@ namespace WiRide
             builder.Services.AddSingleton<AnnouncementService>();
             builder.Services.AddSingleton<SpeedVolumeService>();
             builder.Services.AddSingleton<IntercomService>();
+            builder.Services.AddSingleton<StatusPublisher>();
 
 #if DEBUG
             builder.Logging.AddDebug();
@@ -74,6 +77,7 @@ namespace WiRide
         public int MaxQueuedChunks { get; set; }
         public void SetDuckOthers(bool duck) { }
         public float OutputGain { get; set; } = 1;
+        public bool? IsHeadsetConnected => null;
         public Task StartRecordingAsync() => Task.CompletedTask;
         public Task StopRecordingAsync() => Task.CompletedTask;
         public Task StartPlaybackAsync() => Task.CompletedTask;

@@ -23,4 +23,7 @@ public interface IAudioService
 
     // Zusaetzliche digitale Verstaerkung der Wiedergabe (z.B. nach Tempo), 1 = normal
     float OutputGain { get; set; }
+
+    // true = Kopfhoerer/Headset verbunden, null = unbekannt
+    bool? IsHeadsetConnected { get; }
 }

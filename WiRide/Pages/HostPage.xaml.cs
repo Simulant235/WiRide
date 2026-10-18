@@ -104,6 +104,9 @@ public partial class HostPage : ContentPage
         if (!await PermissionHelper.CheckAndRequestAsync(this))
             return;
 
+        if (!await PermissionHelper.ConfirmHeadsetAsync(this))
+            return;
+
         var setup = _useLastSetup && PasswordGenerator.Validate(AppSettings.LastHotspotPassword) == null
             ? new HotspotSetupResult((HotspotMode)AppSettings.LastHotspotMode, AppSettings.LastHotspotPassword)
             : await HotspotSetupPage.ShowAsync(Navigation);

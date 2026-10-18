@@ -51,6 +51,24 @@ public class AndroidAudioService : IAudioService
 
     public float OutputGain { get; set; } = 1f;
 
+    public bool? IsHeadsetConnected
+    {
+        get
+        {
+            if (!OperatingSystem.IsAndroidVersionAtLeast(23))
+                return null;
+
+            var manager = global::Android.App.Application.Context.GetSystemService(global::Android.Content.Context.AudioService) as AudioManager;
+            var devices = manager?.GetDevices(GetDevicesTargets.Outputs);
+            if (devices == null)
+                return null;
+
+            return devices.Any(d => d.Type is AudioDeviceType.BluetoothSco or AudioDeviceType.BluetoothA2dp
+                or AudioDeviceType.WiredHeadset or AudioDeviceType.WiredHeadphones
+                or AudioDeviceType.UsbHeadset or AudioDeviceType.BleHeadset);
+        }
+    }
+
     public void SetDuckOthers(bool duck)
     {
         if (!OperatingSystem.IsAndroidVersionAtLeast(26))
