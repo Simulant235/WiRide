@@ -1,172 +1,110 @@
 # WiRide - Offline Motorcycle Intercom App
 
-Version 1.1.0 · .NET MAUI 10 · Android
+Version 1.7.0 · .NET MAUI 10 · Android
 
 ## 🎯 Überblick
 
-WiRide ist ein Intercom für Motorradgruppen ohne Internet und ohne Mobilfunk. Ein Handy ist **Host** (stellt das WLAN bereit und mischt das Audio), alle anderen sind **Clients**. Jeder hört alle anderen, aber nicht sich selbst (Mix-Minus).
+WiRide ist ein Intercom für Motorradgruppen ohne Internet und ohne Mobilfunk. Ein Handy ist **Host** (stellt das WLAN bereit und mischt das Audio), alle anderen sind **Clients**. Jeder hört alle anderen, aber nicht sich selbst (Mix-Minus). Alle Einstellungen gelten nur für das eigene Handy.
 
 ## 🏗️ Architektur
 
 ```
-Client-Mikrofon ──Opus/UDP──►  Host  ──Opus/UDP──► Client-Lautsprecher
-                               │  Mix-Minus alle 20 ms:
-                               │  Summe aller Stimmen minus eigene Stimme
-Host-Mikrofon ────────────────►│──────────────────► Host-Lautsprecher
+Client-Mikrofon ─(Rauschfilter/VAD)─Opus/UDP─►  Host  ──Opus/UDP──► Client-Lautsprecher
+                                                 │  alle 20 ms pro Zuhörer:
+                                                 │  Summe aller Stimmen − eigene Stimme
+                                                 │  (+ Normalisierung nach Wunsch des Zuhörers,
+                                                 │   + geteilte Musik, beim Sprechen abgesenkt)
+Host-Mikrofon ──────────────────────────────────►│──────────────────► Host-Lautsprecher
 ```
 
-### Host-Modus
-- **Automatisch:** erstellt eine Wi-Fi-Direct-Gruppe (`DIRECT-WR-WiRide-<Name>`) mit eigenem Passwort (vorgeneriert, änderbar, mind. 8 Zeichen). Unter Android 10 Fallback auf LocalOnlyHotspot mit System-Passwort
-- **Eigener Hotspot:** Nutzer schaltet den Handy-Hotspot selbst ein
-- Zeigt WLAN-Daten als QR-Code zum Beitreten
-- Lauscht auf UDP-Port 8888 (einstellbar), beantwortet Host-Suchen per Broadcast
-- Mischt alle 20 ms einen Frame pro Teilnehmer (Jitter-Buffer 80 ms) und schickt jedem seinen eigenen Mix
-- Entfernt Clients nach 5 s ohne Lebenszeichen
-
-### Client-Modus
-- Beitreten per QR-Code-Scan (verbindet WLAN und Host automatisch)
-- Alternativ: Host im aktuellen WLAN suchen, WLAN aus Liste wählen oder IP manuell eingeben
-- Sendet Mikrofon-Frames, spielt den Mix ab (Puffer max. 100 ms)
-- KeepAlive-Ping jede Sekunde mit Latenzanzeige, automatischer Reconnect bei Abbruch
+- **Host:** Wi-Fi-Direct-Gruppe mit eigenem Passwort (oder eigener Handy-Hotspot), UDP-Port 8888, Mix-Minus mit Jitter-Buffer, verteilt Ereignisse (Beitritt, Schnell-Ansagen) an alle.
+- **Client:** Beitritt per QR-Code, Suche oder WLAN-Auswahl; KeepAlive mit Latenz, Akku und Signal; Auto-Reconnect.
 
 ## 📂 Projektstruktur
 
 ```
 WiRide/
-├── Models/
-│   ├── NetworkMessage.cs        # Binäres UDP-Protokoll (Discover, Join, Audio, Ping/Pong ...)
-│   ├── AudioPacket.cs           # Empfangenes Audio inkl. Codec
-│   └── ClientInfo.cs            # Client-Infos + DiscoveredHost
+├── Models/                       # Binärprotokoll (NetworkMessage), AudioPacket, ClientInfo
 ├── Services/
-│   ├── IntercomService.cs       # Verbindet Audio, Netzwerk, Mixer, Codec (Host/Client-Sitzung)
-│   ├── UdpNetworkService.cs     # Plattformunabhängiger UDP-Service
-│   ├── AudioMixerService.cs     # Mix-Minus für PCM 16-bit
-│   ├── AudioCodecService.cs     # Opus-Kompression (Concentus)
-│   ├── AppSettings.cs           # Persistente Einstellungen
-│   ├── PermissionHelper.cs      # Laufzeit-Berechtigungen
-│   ├── ServiceHelper.cs         # DI-Zugriff aus Pages
-│   └── I*Service.cs             # Interfaces
-├── Pages/
-│   ├── StartPage                # Host/Client-Auswahl
-│   ├── HostPage                 # Host-Ansicht mit Rider-Liste und Latenzen
-│   ├── ClientPage               # Client-Ansicht mit Verbindungsstatus und Latenz
-│   ├── NetworkSelectionPage     # WLAN-Auswahl
-│   ├── SettingsPage             # Einstellungen
-│   └── AudioTestPage            # Nur DEBUG: lokaler Audio-Test
-└── Platforms/Android/Services/
-    ├── AndroidAudioService.cs           # AudioRecord/AudioTrack (VoiceCommunication)
-    ├── AndroidWiFiService.cs            # Hotspot, Scan, WLAN-Verbindung
-    └── IntercomForegroundService.cs     # Hintergrundbetrieb
+│   ├── IntercomService.cs        # Sitzung: Audio, Netzwerk, Mixer, Codec, Ansagen, Ducking, Musik
+│   ├── UdpNetworkService.cs      # UDP: Discover, Join, Audio, Music, Event, Ping/Pong
+│   ├── AudioMixerService.cs      # Mix-Minus, Normalisierung, Musik-Absenkung
+│   ├── AudioProcessor.cs         # Hochpass, Rauschsperre, Sprachaktivierung
+│   ├── AudioCodecService.cs      # Opus (Concentus)
+│   ├── AnnouncementService.cs    # Sprachansagen (Android-TTS oder Piper)
+│   ├── PiperVoiceManager.cs      # KI-Stimmen: Katalog, Download, Entpacken
+│   ├── SpeedVolumeService.cs     # Lautstärke nach Tempo (GPS)
+│   ├── SessionStatus.cs          # Status für Widget und Mini-Fenster
+│   ├── Loc.cs / ThemeManager.cs  # Sprachen, Design, Schriftgröße
+│   └── AppSettings.cs            # Alle Einstellungen (Preferences)
+├── Pages/                        # Start, Host, Client, QR, Einführung, Feedback, Mikro-Test
+│   └── Settings/                 # Einstellungs-Kategorien (per Code aufgebaut, alphabetisch)
+├── Resources/Strings/*.json      # 27 Sprachen
+└── Platforms/Android/            # Audio, WLAN/Hotspot, Piper, Musik-Mitschnitt,
+                                  # Foreground-Service, Widget, Mini-Fenster
 ```
-
-## 🔧 Technologien
-
-- .NET MAUI 10, C#
-- `System.Net.Sockets.UdpClient` mit eigenem Binärprotokoll (20 Byte Header)
-- Android `AudioRecord` / `AudioTrack` (Echo-Unterdrückung über VoiceCommunication)
-- [Concentus](https://github.com/lostromb/concentus) (Opus in reinem C#)
-- Android `LocalOnlyHotspot`, `WifiNetworkSpecifier`, Foreground-Service
 
 ## ⚙️ Features
 
-- ✅ Host/Client-Intercom über WLAN (UDP)
-- ✅ Mix-Minus (niemand hört sich selbst)
-- ✅ Opus-Kompression (~45 statt 640 Byte pro 20 ms), abschaltbar
-- ✅ Hotspot per App mit eigenem Passwort, oder eigener Handy-Hotspot
-- ✅ QR-Code zum Beitreten (Host zeigt, Client scannt)
-- ✅ Neues Design mit Material-Icons
-- ✅ Automatische Host-Suche, manuelle IP als Fallback
-- ✅ WLAN-Scan und Verbindung aus der App
-- ✅ Latenzanzeige (Client und pro Rider beim Host)
-- ✅ Auto-Reconnect und Client-Timeout
-- ✅ Mute (echter Mikrofon-Mute)
-- ✅ Einstellungen: Name, Lautstärke, Opus, Qualität, Passwort-Zeichen, Auto-Reconnect, Port, Systemeinstellungen, Zurücksetzen
-- ✅ Hintergrundbetrieb bei gesperrtem Bildschirm
+**Intercom**
+- Mix-Minus, Opus (~93 % weniger Daten), Latenz-Modus (niedrig / Kompatibilität)
+- Rauschunterdrückung, Normalisierung und Sprachaktivierung (experimentell), jeweils mit Stärke
+- Lautstärke nach Tempo (GPS)
+- Hintergrundbetrieb bei gesperrtem Bildschirm, „Beenden“ in der Benachrichtigung
+
+**Verbindung**
+- Hotspot per App mit eigenem, gespeichertem Passwort (Zeichensatz wählbar) oder eigener Hotspot
+- QR-Code zum Beitreten (Standard-WLAN-Format, auch mit der Handy-Kamera)
+- Schnellstart: „Erneut hosten“ bzw. „Wieder verbinden“ (nur aktiv, wenn der Host online ist)
+- Rider-Liste mit Akku, Signal und Latenz
+
+**Ansagen & Musik**
+- Sprachansagen in der eigenen Sprache (Rider beigetreten/verlassen, Verbindung)
+- Stimme: Android-Sprachausgabe oder KI-Stimme Piper (23 Sprachen, je ca. 64 MB Download)
+- Schnell-Ansagen: Pause, Tanken, Polizei, Gefahr, Langsamer, Abbiegen, Warten, Alles ok
+- Ducking: Spotify/Navi werden leiser, sobald jemand spricht
+- Musik teilen (experimentell, nur Apps, die Mitschnitt erlauben)
+
+**Oberfläche**
+- 27 Sprachen, helles/dunkles Design, 4 Schriftgrößen
+- Einstellungen in Kategorien, alphabetisch sortiert, speichern sofort
+- Home-Widget, schwebendes Mini-Fenster, Mikrofon-Test, Headset-Warnung, Einführung
+- Feedback-Formular (Feedback, Fehler, Übersetzung) per E-Mail
 
 ## 📱 Anforderungen
 
-### Hardware
-- Android 8.0+ für den App-Hotspot (ältere Geräte: manueller Hotspot)
-- Android 10+ empfohlen für WLAN-Verbindung aus der App
-- Bluetooth-Headset im Helm (Audio läuft über das Standard-Audiogerät)
+- Android 8.0+ (App-Hotspot mit eigenem Passwort ab Android 10)
+- Bluetooth-Headset im Helm empfohlen
+- Berechtigungen: Mikrofon, Standort, Geräte in der Nähe, Benachrichtigungen, Kamera (QR), optional „Über anderen Apps einblenden“ (Mini-Fenster)
 
-### Berechtigungen
-- Mikrofon (`RECORD_AUDIO`)
-- Standort (`ACCESS_FINE_LOCATION`, für WLAN-Scan und Hotspot; Standort muss eingeschaltet sein)
-- Geräte in der Nähe (`NEARBY_WIFI_DEVICES`, Android 13+)
-- Benachrichtigungen (`POST_NOTIFICATIONS`, Android 13+, für den Hintergrundbetrieb)
-- WLAN/Netzwerk, Multicast, Foreground-Service, WakeLock
+## 🚀 Build
 
-## 🚀 Installation & Ausführung
-
-### Voraussetzungen
-- Visual Studio 2026 mit .NET MAUI Workload
-- .NET 10 SDK, Android SDK
-
-### Build & Run
 ```bash
-dotnet build WiRide/WiRide.csproj -f net10.0-android
+dotnet build WiRide/WiRide.csproj -f net10.0-android -p:TargetFrameworks=net10.0-android
 ```
-In Visual Studio: Android-Gerät auswählen und starten.
 
-> Hinweis: Die `nuget.config` im Repo ergänzt das globale Package-Source-Mapping um `Concentus`.
+Release-APK:
 
-## 📖 Verwendung
+```bash
+dotnet publish WiRide/WiRide.csproj -f net10.0-android -c Release -p:TargetFrameworks=net10.0-android -p:AndroidPackageFormat=apk
+```
 
-### Als Host
-1. **Gruppe starten** → nochmal **Gruppe starten** tippen
-2. **Automatisch** wählen, Passwort übernehmen, ändern oder neu generieren (↻)
-3. **QR-Code zum Beitreten** zeigen
-4. Verbundene Rider erscheinen mit ihrer Latenz
-5. **Gruppe beenden** stoppt alles (auch Hotspot und Hintergrunddienst)
+Die `nuget.config` im Repo ordnet alle Pakete nuget.org zu (globales Package-Source-Mapping).
 
-### Als Client
-1. **Gruppe beitreten** → **Per QR-Code beitreten** (oder Kamera-Symbol oben)
-2. QR-Code auf dem Host-Handy scannen, WLAN-Verbindung bestätigen
-3. Alternativ: Host suchen, WLAN wählen oder IP eingeben
+## 🌍 Neue Sprache / Übersetzung verbessern
 
-### Während der Fahrt
-- Mikrofon-Kachel tippen = Mute (🎤 ↔ 🔇)
-- Bildschirm kann gesperrt werden, die Benachrichtigung zeigt die aktive Sitzung
-- Bei Verbindungsabbruch verbindet der Client automatisch neu
-
-## 🎵 Audio-Spezifikationen
-
-| Parameter | Wert |
-|---|---|
-| Sample-Rate | 16 kHz (einstellbar: 8/16/24/48 kHz, auf allen Geräten gleich) |
-| Format | PCM 16-bit Mono |
-| Frame | 20 ms (320 Samples bei 16 kHz) |
-| Codec | Opus VoIP, 24 kbit/s (oder unkomprimiert PCM) |
-| Jitter-Buffer Host | max. 4 Frames (80 ms) |
-| Abspiel-Puffer | max. 5 Frames (100 ms) |
-
-## 🔒 Sicherheit & Datenschutz
-
-- Kein Internet, keine Server, keine Aufzeichnung
-- Audio bleibt im lokalen WLAN; der Hotspot ist WPA2-geschützt
-- Die Audio-Pakete selbst sind nicht verschlüsselt (im WLAN mitlesbar, wer das Passwort kennt)
+`Resources/Strings/en.json` kopieren, als `<code>.json` speichern und übersetzen. Platzhalter wie `{0}` und `\n` unverändert lassen. Die Sprache in `Loc.Languages` eintragen.
 
 ## 🐛 Bekannte Einschränkungen
 
-- Nur Android; iOS/Windows nutzen Platzhalter für Audio und WLAN (iOS erlaubt keinen App-Hotspot, der Build braucht einen Mac)
-- WLAN-Passwort mind. 8 Zeichen (WPA2-Vorgabe)
-- Unter Android 10 vergibt Android das Hotspot-Passwort selbst
-- Für den automatischen Hotspot muss WLAN eingeschaltet sein
-- WLAN-Scan ist von Android gedrosselt (4 Scans / 2 Minuten)
-- Port und Sample-Rate müssen auf allen Geräten gleich sein
-- Reichweite hängt vom WLAN ab (typisch 30–100 m)
+- Nur Android (iOS erlaubt keinen App-Hotspot und braucht einen bezahlten Apple-Account)
+- WLAN-Passwort mind. 8 Zeichen (WPA2); unter Android 10 vergibt Android das Hotspot-Passwort
+- Musik teilen funktioniert nicht mit Spotify (Mitschnitt gesperrt)
+- KI-Stimme fehlt für Japanisch, Koreanisch, Thai und Filipino (dort Android-Stimme)
+- Feedback-Adresse muss noch in `FeedbackPage.FeedbackEmail` eingetragen werden
+- Übersetzungen außer Deutsch/Englisch sind maschinell erstellt
 
-## 🛠️ Entwicklung
+## 🛠️ Versionierung
 
-### Versionierung
 `vX.Y.Z - Titel` pro Commit, Feature-Branches werden mit `--no-ff` in `master` gemergt.
-- **X**: 1 sobald alle Grundfunktionen fertig nutzbar sind (sonst 0)
-- **Y**: neues Feature
-- **Z**: Patch
-
-Siehe [ROADMAP.md](../ROADMAP.md) für Changelog und offene Punkte.
-
-### Protokoll
-Jedes UDP-Paket: `'W' 'R' Version Typ SenderId(16)` + Nutzdaten.
-`Audio`: Sequenz (int32), Codec (byte), Audiodaten. `Ping/Pong`: Zeitstempel (int64), Latenz (int32).
+**X** = 1 sobald alle Grundfunktionen nutzbar sind, **Y** = neues Feature, **Z** = Patch. Siehe [ROADMAP.md](../ROADMAP.md).

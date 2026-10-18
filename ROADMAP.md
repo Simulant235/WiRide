@@ -16,6 +16,12 @@
 | v0.8.1 | Dokumentation aktualisiert |
 | v1.0.0 | Erste nutzbare Version: alle Grundfunktionen fertig |
 | v1.1.0 | Eigenes Hotspot-Passwort, QR-Code-Beitritt, neues Design, Einstellungen erweitert, Stop-Fix |
+| v1.2.0 | Einstellungs-Kategorien, Sprachsystem, helles/dunkles Design, Schriftgröße |
+| v1.3.0 | Latenz-Modus, Rauschunterdrückung, Normalisierung, Sprachaktivierung |
+| v1.4.0 | Sprachansagen, KI-Stimme (Piper), Schnell-Ansagen, Ducking, Musik teilen |
+| v1.5.0 | Schnellstart, Passwort merken, Akku/Signal pro Rider, Lautstärke nach Tempo |
+| v1.6.0 | Home-Widget, Mini-Fenster, Mikrofon-Test, Headset-Warnung, Einführung, Feedback |
+| v1.7.0 | 27 Sprachen, Rechts-nach-links-Layout für Arabisch |
 
 ## Praxistest v1.0.0
 
@@ -27,10 +33,10 @@ Alle Grundfunktionen sind implementiert. Offene Praxistests auf echten Geräten:
 - [ ] Reconnect bei Funkloch (Abstand vergrößern und zurückkommen)
 - [ ] Bluetooth-Headset im Helm
 
-## Ideen nach v1.0.0
+## Ideen für später
 
-- iOS-Unterstützung (AVAudioEngine; Host nur über bestehendes WLAN, da iOS keinen App-Hotspot erlaubt)
+- iOS-Unterstützung (AVAudioEngine; Host nur über den persönlichen Hotspot)
 - Verschlüsselung der Audio-Pakete
-- Adaptive Jitter-Buffer / Packet-Loss-Concealment (Opus FEC)
-- Voice-Activity-Detection (nur senden, wenn gesprochen wird)
-- Lautstärke pro Rider beim Host
+- Packet-Loss-Concealment (Opus FEC)
+- Mehr Reichweite (Relay über einen zweiten Host)
+- Übersetzungen durch Muttersprachler prüfen lassen
