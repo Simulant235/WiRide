@@ -52,6 +52,7 @@ namespace WiRide
             builder.Services.AddSingleton<AudioMixerService>();
             builder.Services.AddSingleton<AudioCodecService>();
             builder.Services.AddSingleton<AnnouncementService>();
+            builder.Services.AddSingleton<SpeedVolumeService>();
             builder.Services.AddSingleton<IntercomService>();
 
 #if DEBUG
@@ -72,6 +73,7 @@ namespace WiRide
         public bool IsPlaying => false;
         public int MaxQueuedChunks { get; set; }
         public void SetDuckOthers(bool duck) { }
+        public float OutputGain { get; set; } = 1;
         public Task StartRecordingAsync() => Task.CompletedTask;
         public Task StopRecordingAsync() => Task.CompletedTask;
         public Task StartPlaybackAsync() => Task.CompletedTask;
@@ -93,5 +95,6 @@ namespace WiRide
         public Task<bool> ConnectToNetworkAsync(string ssid, string password) => Task.FromResult(false);
         public Task DisconnectFromNetworkAsync() => Task.CompletedTask;
         public Task<List<string>> ScanNetworksAsync() => Task.FromResult(new List<string>());
+        public List<string> GetVisibleNetworks(bool triggerScan) => new();
     }
 }

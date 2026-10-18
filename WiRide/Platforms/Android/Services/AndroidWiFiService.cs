@@ -250,6 +250,26 @@ public class AndroidWiFiService : IWiFiService
         }
     }
 
+    public List<string> GetVisibleNetworks(bool triggerScan)
+    {
+        try
+        {
+            if (triggerScan)
+                _wifiManager?.StartScan();
+
+            return (_wifiManager?.ScanResults ?? new List<ScanResult>())
+                .Select(r => r.Ssid)
+                .Where(s => !string.IsNullOrWhiteSpace(s))
+                .Select(s => s!)
+                .Distinct()
+                .ToList();
+        }
+        catch
+        {
+            return new List<string>();
+        }
+    }
+
     public async Task<bool> ConnectToNetworkAsync(string ssid, string password)
     {
         if (_wifiManager == null || _connectivityManager == null)

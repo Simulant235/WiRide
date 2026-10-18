@@ -79,7 +79,14 @@
                             <DataTemplate>
                                 <Border Style="{StaticResource WrCard}" Padding="14,12">
                                     <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
-                                        <Label Text="{x:Static app:Icons.Person}" Style="{StaticResource WrIcon}" FontSize="22" TextColor="{StaticResource WrSuccess}" />
+                                        <Label Text="{x:Static app:Icons.Person}" Style="{StaticResource WrIcon}" FontSize="22" TextColor="{StaticResource WrSuccess}">
+                                            <Label.Triggers>
+                                                <!-- Akku schwach oder Signal schlecht -> Warnfarbe -->
+                                                <DataTrigger TargetType="Label" Binding="{Binding IsWeak}" Value="True">
+                                                    <Setter Property="TextColor" Value="{StaticResource WrAccent}" />
+                                                </DataTrigger>
+                                            </Label.Triggers>
+                                        </Label>
                                         <Label Grid.Column="1" Text="{Binding ClientName}" Style="{StaticResource WrBody}" />
                                         <Label Grid.Column="2" Text="{Binding LatencyText}" Style="{StaticResource WrCaption}" VerticalOptions="Center" />
                                     </Grid>

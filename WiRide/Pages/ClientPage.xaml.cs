@@ -9,6 +9,13 @@ public partial class ClientPage : ContentPage
     private readonly IWiFiService _wifi;
     private bool _busy;
     private bool _permissionsChecked;
+    private bool _quickReconnect;
+
+    // quickReconnect = Schnellstart: mit gespeichertem WLAN/Host sofort verbinden
+    public ClientPage(bool quickReconnect) : this()
+    {
+        _quickReconnect = quickReconnect;
+    }
 
     public ClientPage()
     {
@@ -25,6 +32,26 @@ public partial class ClientPage : ContentPage
         base.OnAppearing();
         _intercom.StateChanged += OnIntercomStateChanged;
         UpdateUi();
+
+        if (_quickReconnect)
+        {
+            _quickReconnect = false;
+            Dispatcher.Dispatch(async () => await RunBusyAsync(QuickReconnectAsync));
+        }
+    }
+
+    private async Task QuickReconnectAsync()
+    {
+        if (!string.IsNullOrEmpty(AppSettings.LastWifiSsid) && _wifi.CurrentNetworkSsid != AppSettings.LastWifiSsid
+            && !string.IsNullOrEmpty(AppSettings.LastWifiPassword))
+        {
+            await JoinWifiAndConnectAsync(AppSettings.LastWifiSsid, AppSettings.LastWifiPassword);
+            return;
+        }
+
+        var host = await DiscoverAsync();
+        host ??= new DiscoveredHost { Name = AppSettings.LastHostName, IpAddress = AppSettings.LastHostIp };
+        await ConnectToHostAsync(host);
     }
 
     protected override void OnDisappearing()
@@ -117,6 +144,9 @@ public partial class ClientPage : ContentPage
 
     private async Task JoinWifiAndConnectAsync(string ssid, string password)
     {
+        AppSettings.LastWifiSsid = ssid;
+        AppSettings.LastWifiPassword = password;
+
         if (_wifi.CurrentNetworkSsid != ssid)
         {
             SetStatus(Loc.T("ClientWifiConnecting"), ssid);

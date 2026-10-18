@@ -55,6 +55,16 @@ public static class SettingsCatalog
                 Audio.Volume = (float)v;
             }
         };
+        yield return new ToggleSliderSetting
+        {
+            TitleKey = "SetSpeedVolume",
+            DescriptionKey = "SetSpeedVolumeDesc",
+            Icon = Icons.Motorcycle,
+            GetEnabled = () => AppSettings.SpeedVolumeEnabled,
+            SetEnabled = v => AppSettings.SpeedVolumeEnabled = v,
+            GetValue = () => AppSettings.SpeedVolumeStrength,
+            SetValue = v => AppSettings.SpeedVolumeStrength = v
+        };
         yield return new ToggleSetting
         {
             TitleKey = "SetOpus",
@@ -276,6 +286,29 @@ public static class SettingsCatalog
 
     private static IEnumerable<SettingItem> Connection()
     {
+        yield return new ToggleSetting
+        {
+            TitleKey = "SetQuickStart",
+            DescriptionKey = "SetQuickStartDesc",
+            Icon = Icons.Autorenew,
+            Get = () => AppSettings.QuickStartEnabled,
+            Set = v => AppSettings.QuickStartEnabled = v
+        };
+        yield return new ActionSetting
+        {
+            TitleKey = "SetForgetSession",
+            DescriptionKey = "SetForgetSessionDesc",
+            Icon = Icons.Reset,
+            Danger = true,
+            Run = async page =>
+            {
+                AppSettings.LastRole = string.Empty;
+                AppSettings.LastWifiSsid = string.Empty;
+                AppSettings.LastWifiPassword = string.Empty;
+                AppSettings.LastHotspotPassword = string.Empty;
+                await page.DisplayAlertAsync(Loc.T("SetForgetSession"), Loc.T("SessionForgotten"), Loc.T("Ok"));
+            }
+        };
         yield return new ToggleSetting
         {
             TitleKey = "SetAutoReconnect",

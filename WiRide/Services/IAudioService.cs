@@ -20,4 +20,7 @@ public interface IAudioService
 
     // Andere Apps (Musik, Navi) leiser stellen, solange gesprochen wird
     void SetDuckOthers(bool duck);
+
+    // Zusaetzliche digitale Verstaerkung der Wiedergabe (z.B. nach Tempo), 1 = normal
+    float OutputGain { get; set; }
 }

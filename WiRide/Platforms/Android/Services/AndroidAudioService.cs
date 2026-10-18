@@ -49,6 +49,8 @@ public class AndroidAudioService : IAudioService
 
     private AudioFocusRequestClass? _duckRequest;
 
+    public float OutputGain { get; set; } = 1f;
+
     public void SetDuckOthers(bool duck)
     {
         if (!OperatingSystem.IsAndroidVersionAtLeast(26))
@@ -279,6 +281,17 @@ public class AndroidAudioService : IAudioService
     {
         if (_isPlaying && audioData.Length > 0)
         {
+            float gain = OutputGain;
+            if (Math.Abs(gain - 1f) > 0.01f)
+            {
+                var samples = new short[audioData.Length / 2];
+                Buffer.BlockCopy(audioData, 0, samples, 0, samples.Length * 2);
+                for (int i = 0; i < samples.Length; i++)
+                    samples[i] = (short)Math.Clamp(samples[i] * gain, short.MinValue, short.MaxValue);
+                audioData = new byte[samples.Length * 2];
+                Buffer.BlockCopy(samples, 0, audioData, 0, audioData.Length);
+            }
+
             _playbackQueue.Enqueue(audioData);
 
             // Queue begrenzen: beim Netzwerk-Streaming kommen Chunks unregelmaessig an
