@@ -1,6 +1,7 @@
 using Android.Content;
 using Android.Net;
 using Android.Net.Wifi;
+using Android.Net.Wifi.P2p;
 using Android.OS;
 using WiRide.Services;
 using AndroidApp = Android.App.Application;
@@ -15,6 +16,9 @@ public class AndroidWiFiService : IWiFiService
     private readonly ConnectivityManager? _connectivityManager;
 
     private WifiManager.LocalOnlyHotspotReservation? _reservation;
+    private WifiP2pManager? _p2pManager;
+    private WifiP2pManager.Channel? _p2pChannel;
+    private bool _p2pGroupActive;
     private HotspotInfo? _hotspot;
     private NetworkCallback? _networkCallback;
     private global::Android.Net.Network? _boundNetwork;
@@ -25,7 +29,8 @@ public class AndroidWiFiService : IWiFiService
         _connectivityManager = _context.GetSystemService(Context.ConnectivityService) as ConnectivityManager;
     }
 
-    public bool IsHotspotEnabled => _reservation != null;
+    public string? LastError { get; private set; }
+    public bool IsHotspotEnabled => _reservation != null || _p2pGroupActive;
     public HotspotInfo? CurrentHotspot => _hotspot;
     public bool IsConnectedToWiFi => _boundNetwork != null || (_wifiManager?.ConnectionInfo?.NetworkId ?? -1) != -1;
     public string? CurrentNetworkSsid => _wifiManager?.ConnectionInfo?.SSID?.Replace("\"", "");
@@ -45,18 +50,95 @@ public class AndroidWiFiService : IWiFiService
 
     // ---------------- Hotspot (Host) ----------------
 
-    public async Task<HotspotInfo?> StartHotspotAsync()
+    public async Task<HotspotInfo?> StartHotspotAsync(string password)
     {
         if (_hotspot != null)
-            return _hotspot;
+            await StopHotspotAsync();
+
+        LastError = null;
 
         if (_wifiManager == null || Build.VERSION.SdkInt < BuildVersionCodes.O)
+        {
+            LastError = "Dieses Geraet unterstuetzt keinen App-Hotspot.";
+            return null;
+        }
+
+        if (!_wifiManager.IsWifiEnabled)
+        {
+            LastError = "Bitte zuerst WLAN einschalten (es muss nicht verbunden sein).";
+            return null;
+        }
+
+        // Android 10+: Wi-Fi Direct Gruppe mit eigenem Namen und Passwort
+        if (Build.VERSION.SdkInt >= BuildVersionCodes.Q)
+        {
+            _hotspot = await StartWifiDirectGroupAsync(password);
+            if (_hotspot != null)
+                return _hotspot;
+        }
+
+        // Fallback: LocalOnlyHotspot (Passwort vergibt Android)
+        _hotspot = await StartLocalOnlyHotspotAsync();
+        if (_hotspot == null)
+            LastError ??= "Hotspot konnte nicht gestartet werden. Ist der Standort eingeschaltet?";
+        return _hotspot;
+    }
+
+    private async Task<HotspotInfo?> StartWifiDirectGroupAsync(string password)
+    {
+        _p2pManager ??= _context.GetSystemService(Context.WifiP2pService) as WifiP2pManager;
+        if (_p2pManager == null)
             return null;
 
+        _p2pChannel ??= _p2pManager.Initialize(_context, Looper.MainLooper, null);
+        if (_p2pChannel == null)
+            return null;
+
+        // Eventuell noch laufende Gruppe entfernen
+        await RunP2pAsync(listener => _p2pManager.RemoveGroup(_p2pChannel, listener));
+
+        // Name muss mit "DIRECT-xy-" beginnen, max. 32 Zeichen
+        var name = new string(AppSettings.RiderName.Where(c => char.IsAsciiLetterOrDigit(c) || c == '_' || c == '-').ToArray());
+        var ssid = $"DIRECT-WR-WiRide-{name}";
+        if (ssid.Length > 32)
+            ssid = ssid[..32];
+
+        try
+        {
+            var config = new WifiP2pConfig.Builder()
+                .SetNetworkName(ssid)!
+                .SetPassphrase(password)!
+                .Build()!;
+
+            if (!await RunP2pAsync(listener => _p2pManager.CreateGroup(_p2pChannel, config, listener)))
+                return null;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Wi-Fi Direct fehlgeschlagen: {ex.Message}");
+            return null;
+        }
+
+        _p2pGroupActive = true;
+
+        // Gruppeninfo abfragen, um den tatsaechlichen Namen zu bestaetigen
+        for (int i = 0; i < 10; i++)
+        {
+            var group = await RequestGroupInfoAsync();
+            if (group?.NetworkName != null)
+                return new HotspotInfo { Ssid = group.NetworkName, Password = group.Passphrase ?? password };
+            await Task.Delay(300);
+        }
+
+        return new HotspotInfo { Ssid = ssid, Password = password };
+    }
+
+    private async Task<HotspotInfo?> StartLocalOnlyHotspotAsync()
+    {
         var tcs = new TaskCompletionSource<WifiManager.LocalOnlyHotspotReservation?>();
         try
         {
-            _wifiManager.StartLocalOnlyHotspot(new HotspotCallback(tcs), new Handler(Looper.MainLooper!));
+            _wifiManager!.StartLocalOnlyHotspot(new HotspotCallback(tcs), new Handler(Looper.MainLooper!));
         }
         catch (Exception ex)
         {
@@ -70,8 +152,9 @@ public class AndroidWiFiService : IWiFiService
             return null;
 
         _reservation = reservation;
-        _hotspot = ReadHotspotInfo(reservation);
-        return _hotspot;
+        var info = ReadHotspotInfo(reservation);
+        info.PasswordFromSystem = true;
+        return info;
     }
 
     private static HotspotInfo ReadHotspotInfo(WifiManager.LocalOnlyHotspotReservation reservation)
@@ -93,12 +176,32 @@ public class AndroidWiFiService : IWiFiService
         };
     }
 
-    public Task StopHotspotAsync()
+    private static async Task<bool> RunP2pAsync(Action<WifiP2pManager.IActionListener> action)
+    {
+        var listener = new P2pActionListener();
+        action(listener);
+        var finished = await Task.WhenAny(listener.Task, Task.Delay(5000));
+        return finished == listener.Task && listener.Task.Result;
+    }
+
+    private async Task<WifiP2pGroup?> RequestGroupInfoAsync()
+    {
+        var listener = new P2pGroupInfoListener();
+        _p2pManager!.RequestGroupInfo(_p2pChannel, listener);
+        var finished = await Task.WhenAny(listener.Task, Task.Delay(2000));
+        return finished == listener.Task ? listener.Task.Result : null;
+    }
+
+    public async Task StopHotspotAsync()
     {
         _reservation?.Close();
         _reservation = null;
+
+        if (_p2pGroupActive && _p2pManager != null && _p2pChannel != null)
+            await RunP2pAsync(listener => _p2pManager.RemoveGroup(_p2pChannel, listener));
+
+        _p2pGroupActive = false;
         _hotspot = null;
-        return Task.CompletedTask;
     }
 
     // Fallback: Nutzer aktiviert den normalen Handy-Hotspot selbst
@@ -234,6 +337,28 @@ public class AndroidWiFiService : IWiFiService
 
         _boundNetwork = null;
         return Task.CompletedTask;
+    }
+
+    private class P2pActionListener : Java.Lang.Object, WifiP2pManager.IActionListener
+    {
+        private readonly TaskCompletionSource<bool> _tcs = new();
+        public Task<bool> Task => _tcs.Task;
+
+        public void OnSuccess() => _tcs.TrySetResult(true);
+
+        public void OnFailure(WifiP2pFailureReason reason)
+        {
+            System.Diagnostics.Debug.WriteLine($"Wi-Fi Direct Fehler: {reason}");
+            _tcs.TrySetResult(false);
+        }
+    }
+
+    private class P2pGroupInfoListener : Java.Lang.Object, WifiP2pManager.IGroupInfoListener
+    {
+        private readonly TaskCompletionSource<WifiP2pGroup?> _tcs = new();
+        public Task<WifiP2pGroup?> Task => _tcs.Task;
+
+        public void OnGroupInfoAvailable(WifiP2pGroup? group) => _tcs.TrySetResult(group);
     }
 
     private class HotspotCallback : WifiManager.LocalOnlyHotspotCallback

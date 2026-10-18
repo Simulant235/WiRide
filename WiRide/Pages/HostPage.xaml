@@ -1,94 +1,101 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:app="clr-namespace:WiRide"
              x:Class="WiRide.Pages.HostPage"
-             BackgroundColor="#6C6C70"
-             NavigationPage.HasNavigationBar="False">
+             Style="{StaticResource WrPage}">
 
-    <Grid RowDefinitions="Auto,*,Auto" Padding="20">
-        
-        <ImageButton Grid.Row="0"
-                    Source="settings_icon.png"
-                    WidthRequest="40"
-                    HeightRequest="40"
-                    HorizontalOptions="End"
-                    VerticalOptions="Start"
-                    BackgroundColor="Transparent"
-                    Clicked="OnSettingsClicked"
-                    Margin="0,20,0,0"/>
+    <Grid RowDefinitions="Auto,*,Auto" Padding="20,16">
 
-        <VerticalStackLayout Grid.Row="1"
-                            Spacing="40" 
-                            VerticalOptions="Center">
-            
-            <Label x:Name="StatusLabel"
-                   Text="You are Host"
-                   FontSize="32"
-                   FontAttributes="Bold"
-                   TextColor="#FFD60A"
-                   HorizontalOptions="Center"/>
+        <!-- Kopfzeile -->
+        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12" Margin="0,8,0,16">
+            <Button Text="{x:Static app:Icons.ArrowBack}" Style="{StaticResource WrIconButton}" Clicked="OnBackClicked" />
+            <Label Grid.Column="1" Text="Gruppe hosten" Style="{StaticResource WrTitle}" />
+            <Button Grid.Column="2" Text="{x:Static app:Icons.Settings}" Style="{StaticResource WrIconButton}" Clicked="OnSettingsClicked" />
+        </Grid>
 
-            <VerticalStackLayout x:Name="ClientsListContainer"
-                                Spacing="10"
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Spacing="16">
+
+                <!-- Status -->
+                <Border Style="{StaticResource WrCard}">
+                    <VerticalStackLayout Spacing="14">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                            <Ellipse x:Name="StatusDot" WidthRequest="12" HeightRequest="12" Fill="{StaticResource WrTextMuted}" VerticalOptions="Center" />
+                            <Label x:Name="StatusLabel" Grid.Column="1" Text="Bereit zum Starten" Style="{StaticResource WrBody}" FontAttributes="Bold" />
+                        </Grid>
+
+                        <Label x:Name="IdleHint"
+                               Text="Tippe unten auf „Gruppe starten“. Danach wählst du, wie das WLAN für die Gruppe bereitgestellt wird."
+                               Style="{StaticResource WrCaption}" />
+
+                        <Grid x:Name="NetworkInfo" RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="Auto,*" RowSpacing="10" ColumnSpacing="12" IsVisible="False">
+                            <Label Text="{x:Static app:Icons.Wifi}" Style="{StaticResource WrIcon}" FontSize="20" TextColor="{StaticResource WrTextMuted}" />
+                            <Label x:Name="SsidLabel" Grid.Column="1" Style="{StaticResource WrBody}" FontSize="15" />
+                            <Label Grid.Row="1" Text="{x:Static app:Icons.Lock}" Style="{StaticResource WrIcon}" FontSize="20" TextColor="{StaticResource WrTextMuted}" />
+                            <Label x:Name="PasswordLabel" Grid.Row="1" Grid.Column="1" Style="{StaticResource WrBody}" FontSize="15" FontAttributes="Bold" CharacterSpacing="1" />
+                            <Label Grid.Row="2" Text="{x:Static app:Icons.Router}" Style="{StaticResource WrIcon}" FontSize="20" TextColor="{StaticResource WrTextMuted}" />
+                            <Label x:Name="IpLabel" Grid.Row="2" Grid.Column="1" Style="{StaticResource WrCaption}" VerticalOptions="Center" />
+                        </Grid>
+
+                        <Button x:Name="QrButton"
+                                Text="QR-Code zum Beitreten"
+                                Style="{StaticResource WrSecondaryButton}"
+                                ContentLayout="Left,10"
+                                Clicked="OnQrClicked"
                                 IsVisible="False">
-                <Label Text="Connected Riders:"
-                       FontSize="16"
-                       TextColor="White"
-                       HorizontalOptions="Center"/>
-                <CollectionView x:Name="ClientsListView"
-                               HeightRequest="100">
-                    <CollectionView.ItemTemplate>
-                        <DataTemplate>
-                            <Label Text="{Binding DisplayText}"
-                                   FontSize="14"
-                                   TextColor="#30D158"
-                                   HorizontalOptions="Center"
-                                   Margin="0,5"/>
-                        </DataTemplate>
-                    </CollectionView.ItemTemplate>
-                </CollectionView>
+                            <Button.ImageSource>
+                                <FontImageSource FontFamily="Icons" Glyph="{x:Static app:Icons.QrCode}" Color="{StaticResource WrText}" Size="22" />
+                            </Button.ImageSource>
+                        </Button>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Mikrofon -->
+                <VerticalStackLayout x:Name="MuteSection" Spacing="8" IsVisible="False" Margin="0,8">
+                    <Border x:Name="MuteCircle"
+                            WidthRequest="132"
+                            HeightRequest="132"
+                            StrokeThickness="0"
+                            HorizontalOptions="Center"
+                            BackgroundColor="{StaticResource WrAccent}">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="66" />
+                        </Border.StrokeShape>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnMuteToggled" />
+                        </Border.GestureRecognizers>
+                        <Label x:Name="MuteIcon" Text="{x:Static app:Icons.Mic}" Style="{StaticResource WrIcon}" FontSize="60" TextColor="{StaticResource WrOnAccent}" />
+                    </Border>
+                    <Label x:Name="MuteLabel" Text="Mikrofon an" Style="{StaticResource WrCaption}" HorizontalTextAlignment="Center" />
+                </VerticalStackLayout>
+
+                <!-- Rider -->
+                <VerticalStackLayout x:Name="RidersSection" Spacing="8" IsVisible="False">
+                    <Label x:Name="RidersTitle" Text="Rider" Style="{StaticResource WrSectionTitle}" />
+                    <Label x:Name="NoRidersLabel" Text="Noch niemand verbunden. Zeig den anderen den QR-Code." Style="{StaticResource WrCaption}" Margin="4,0" />
+                    <VerticalStackLayout x:Name="RidersList" Spacing="8">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate>
+                                <Border Style="{StaticResource WrCard}" Padding="14,12">
+                                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                        <Label Text="{x:Static app:Icons.Person}" Style="{StaticResource WrIcon}" FontSize="22" TextColor="{StaticResource WrSuccess}" />
+                                        <Label Grid.Column="1" Text="{Binding ClientName}" Style="{StaticResource WrBody}" />
+                                        <Label Grid.Column="2" Text="{Binding LatencyText}" Style="{StaticResource WrCaption}" VerticalOptions="Center" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
             </VerticalStackLayout>
+        </ScrollView>
 
-            <Border BackgroundColor="White"
-                    StrokeThickness="0"
-                    WidthRequest="100"
-                    HeightRequest="100"
-                    HorizontalOptions="Center">
-                <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="20"/>
-                </Border.StrokeShape>
-                <Border.GestureRecognizers>
-                    <TapGestureRecognizer Tapped="OnMuteToggled"/>
-                </Border.GestureRecognizers>
-                
-                <Label x:Name="MuteIcon"
-                       Text="🎤"
-                       FontSize="50"
-                       HorizontalOptions="Center"
-                       VerticalOptions="Center"/>
-            </Border>
-        </VerticalStackLayout>
-
-        <VerticalStackLayout Grid.Row="2" Spacing="5" Margin="0,0,0,20">
-            <Label x:Name="NetworkStatusLabel"
-                   Text="Wi-Fi Hotspot: Starting..."
-                   FontSize="12"
-                   TextColor="White"
-                   HorizontalOptions="Center"/>
-            <Label x:Name="NetworkNameLabel"
-                   Text="Network: -"
-                   FontSize="12"
-                   TextColor="#8E8E93"
-                   HorizontalOptions="Center"/>
-            <Button x:Name="StopHostButton"
-                   Text="Stop Hosting"
-                   BackgroundColor="#FF3B30"
-                   TextColor="White"
-                   CornerRadius="10"
-                   Padding="20,10"
-                   Clicked="OnStopHostClicked"
-                   HorizontalOptions="Center"/>
-        </VerticalStackLayout>
+        <Button x:Name="StartStopButton"
+                Grid.Row="2"
+                Text="Gruppe starten"
+                Style="{StaticResource WrPrimaryButton}"
+                Clicked="OnStartStopClicked"
+                Margin="0,12,0,8" />
     </Grid>
-
 </ContentPage>

@@ -15,6 +15,7 @@
 | v0.8.0 | Hintergrundbetrieb (Foreground-Service) |
 | v0.8.1 | Dokumentation aktualisiert |
 | v1.0.0 | Erste nutzbare Version: alle Grundfunktionen fertig |
+| v1.1.0 | Eigenes Hotspot-Passwort, QR-Code-Beitritt, neues Design, Einstellungen erweitert, Stop-Fix |
 
 ## Praxistest v1.0.0
 
@@ -29,7 +30,6 @@ Alle Grundfunktionen sind implementiert. Offene Praxistests auf echten Geräten:
 ## Ideen nach v1.0.0
 
 - iOS-Unterstützung (AVAudioEngine; Host nur über bestehendes WLAN, da iOS keinen App-Hotspot erlaubt)
-- QR-Code mit WLAN-Daten auf dem Host zum schnellen Beitreten
 - Verschlüsselung der Audio-Pakete
 - Adaptive Jitter-Buffer / Packet-Loss-Concealment (Opus FEC)
 - Voice-Activity-Detection (nur senden, wenn gesprochen wird)

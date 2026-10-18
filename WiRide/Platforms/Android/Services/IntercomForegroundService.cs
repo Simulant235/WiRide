@@ -4,6 +4,7 @@ using Android.Content.PM;
 using Android.Net.Wifi;
 using Android.OS;
 using AndroidX.Core.App;
+using WiRide.Services;
 using AndroidApp = Android.App.Application;
 
 namespace WiRide.Platforms.Android.Services;
@@ -16,6 +17,7 @@ public class IntercomForegroundService : Service
     private const int NotificationId = 1001;
     private const string ChannelId = "wiride_intercom";
     private const string ExtraText = "text";
+    private const string ActionStop = "com.wiride.STOP";
 
     private PowerManager.WakeLock? _wakeLock;
     private WifiManager.WifiLock? _wifiLock;
@@ -42,7 +44,18 @@ public class IntercomForegroundService : Service
 
     public override StartCommandResult OnStartCommand(Intent? intent, StartCommandFlags flags, int startId)
     {
+        // "Beenden" in der Benachrichtigung -> komplette Sitzung stoppen
+        if (intent?.Action == ActionStop)
+        {
+            MainThread.BeginInvokeOnMainThread(async () => await ServiceHelper.Get<IntercomService>().StopAsync());
+            StopSelf();
+            return StartCommandResult.NotSticky;
+        }
+
         CreateNotificationChannel();
+
+        var stopIntent = new Intent(this, typeof(IntercomForegroundService)).SetAction(ActionStop);
+        var stopPending = PendingIntent.GetService(this, 1, stopIntent, PendingIntentFlags.Immutable | PendingIntentFlags.UpdateCurrent);
 
         var openApp = PackageManager?.GetLaunchIntentForPackage(PackageName ?? string.Empty);
         var pendingIntent = openApp != null
@@ -55,6 +68,7 @@ public class IntercomForegroundService : Service
             .SetSmallIcon(Resource.Mipmap.appicon)!
             .SetOngoing(true)!
             .SetContentIntent(pendingIntent)!
+            .AddAction(0, "Beenden", stopPending)!
             .Build()!;
 
         if (Build.VERSION.SdkInt >= BuildVersionCodes.Q)

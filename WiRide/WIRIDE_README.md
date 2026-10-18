@@ -1,6 +1,6 @@
 # WiRide - Offline Motorcycle Intercom App
 
-Version 1.0.0 · .NET MAUI 10 · Android
+Version 1.1.0 · .NET MAUI 10 · Android
 
 ## 🎯 Überblick
 
@@ -16,14 +16,16 @@ Host-Mikrofon ────────────────►│────
 ```
 
 ### Host-Modus
-- Startet einen WLAN-Hotspot (LocalOnlyHotspot, SSID/Passwort werden angezeigt) oder nutzt einen manuellen Hotspot / ein bestehendes WLAN
+- **Automatisch:** erstellt eine Wi-Fi-Direct-Gruppe (`DIRECT-WR-WiRide-<Name>`) mit eigenem Passwort (vorgeneriert, änderbar, mind. 8 Zeichen). Unter Android 10 Fallback auf LocalOnlyHotspot mit System-Passwort
+- **Eigener Hotspot:** Nutzer schaltet den Handy-Hotspot selbst ein
+- Zeigt WLAN-Daten als QR-Code zum Beitreten
 - Lauscht auf UDP-Port 8888 (einstellbar), beantwortet Host-Suchen per Broadcast
 - Mischt alle 20 ms einen Frame pro Teilnehmer (Jitter-Buffer 80 ms) und schickt jedem seinen eigenen Mix
 - Entfernt Clients nach 5 s ohne Lebenszeichen
 
 ### Client-Modus
-- Sucht den Host im aktuellen WLAN (Broadcast + Gateway-IP)
-- Falls keiner gefunden: WiRide-WLAN aus Scan wählen oder Host-IP manuell eingeben
+- Beitreten per QR-Code-Scan (verbindet WLAN und Host automatisch)
+- Alternativ: Host im aktuellen WLAN suchen, WLAN aus Liste wählen oder IP manuell eingeben
 - Sendet Mikrofon-Frames, spielt den Mix ab (Puffer max. 100 ms)
 - KeepAlive-Ping jede Sekunde mit Latenzanzeige, automatischer Reconnect bei Abbruch
 
@@ -70,13 +72,15 @@ WiRide/
 - ✅ Host/Client-Intercom über WLAN (UDP)
 - ✅ Mix-Minus (niemand hört sich selbst)
 - ✅ Opus-Kompression (~45 statt 640 Byte pro 20 ms), abschaltbar
-- ✅ Hotspot per App, Fallback auf manuellen Hotspot oder bestehendes WLAN
+- ✅ Hotspot per App mit eigenem Passwort, oder eigener Handy-Hotspot
+- ✅ QR-Code zum Beitreten (Host zeigt, Client scannt)
+- ✅ Neues Design mit Material-Icons
 - ✅ Automatische Host-Suche, manuelle IP als Fallback
 - ✅ WLAN-Scan und Verbindung aus der App
 - ✅ Latenzanzeige (Client und pro Rider beim Host)
 - ✅ Auto-Reconnect und Client-Timeout
 - ✅ Mute (echter Mikrofon-Mute)
-- ✅ Einstellungen: Name, Lautstärke, Auto-Reconnect, Opus, Port, Sample-Rate
+- ✅ Einstellungen: Name, Lautstärke, Opus, Qualität, Passwort-Zeichen, Auto-Reconnect, Port, Systemeinstellungen, Zurücksetzen
 - ✅ Hintergrundbetrieb bei gesperrtem Bildschirm
 
 ## 📱 Anforderungen
@@ -110,15 +114,16 @@ In Visual Studio: Android-Gerät auswählen und starten.
 ## 📖 Verwendung
 
 ### Als Host
-1. **Host** wählen, Berechtigungen erlauben
-2. **WiRide-Hotspot starten** (oder manuellen Hotspot / aktuelles WLAN)
-3. WLAN-Name, Passwort und IP werden unten angezeigt
+1. **Gruppe starten** → nochmal **Gruppe starten** tippen
+2. **Automatisch** wählen, Passwort übernehmen, ändern oder neu generieren (↻)
+3. **QR-Code zum Beitreten** zeigen
 4. Verbundene Rider erscheinen mit ihrer Latenz
+5. **Gruppe beenden** stoppt alles (auch Hotspot und Hintergrunddienst)
 
 ### Als Client
-1. **Client** wählen, **Connect to Network** tippen
-2. Ist das Handy schon im WLAN des Hosts, wird er automatisch gefunden
-3. Sonst **WiRide-WLAN wählen** (Passwort vom Host eingeben) oder **Host-IP manuell eingeben**
+1. **Gruppe beitreten** → **Per QR-Code beitreten** (oder Kamera-Symbol oben)
+2. QR-Code auf dem Host-Handy scannen, WLAN-Verbindung bestätigen
+3. Alternativ: Host suchen, WLAN wählen oder IP eingeben
 
 ### Während der Fahrt
 - Mikrofon-Kachel tippen = Mute (🎤 ↔ 🔇)
@@ -145,7 +150,9 @@ In Visual Studio: Android-Gerät auswählen und starten.
 ## 🐛 Bekannte Einschränkungen
 
 - Nur Android; iOS/Windows nutzen Platzhalter für Audio und WLAN (iOS erlaubt keinen App-Hotspot, der Build braucht einen Mac)
-- LocalOnlyHotspot: SSID und Passwort vergibt Android zufällig (nicht konfigurierbar)
+- WLAN-Passwort mind. 8 Zeichen (WPA2-Vorgabe)
+- Unter Android 10 vergibt Android das Hotspot-Passwort selbst
+- Für den automatischen Hotspot muss WLAN eingeschaltet sein
 - WLAN-Scan ist von Android gedrosselt (4 Scans / 2 Minuten)
 - Port und Sample-Rate müssen auf allen Geräten gleich sein
 - Reichweite hängt vom WLAN ab (typisch 30–100 m)

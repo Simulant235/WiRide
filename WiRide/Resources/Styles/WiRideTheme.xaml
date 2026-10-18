@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <!-- WiRide Farben -->
+    <Color x:Key="WrBackground">#0F1115</Color>
+    <Color x:Key="WrSurface">#1A1D23</Color>
+    <Color x:Key="WrSurfaceHigh">#262A33</Color>
+    <Color x:Key="WrAccent">#FF8A00</Color>
+    <Color x:Key="WrAccentSoft">#33FF8A00</Color>
+    <Color x:Key="WrSuccess">#32D74B</Color>
+    <Color x:Key="WrSuccessSoft">#3332D74B</Color>
+    <Color x:Key="WrDanger">#FF453A</Color>
+    <Color x:Key="WrText">#F5F6F7</Color>
+    <Color x:Key="WrTextMuted">#9AA0A8</Color>
+    <Color x:Key="WrOnAccent">#141414</Color>
+
+    <!-- Seiten -->
+    <Style x:Key="WrPage" TargetType="ContentPage">
+        <Setter Property="BackgroundColor" Value="{StaticResource WrBackground}" />
+        <Setter Property="Shell.NavBarIsVisible" Value="False" />
+        <Setter Property="NavigationPage.HasNavigationBar" Value="False" />
+    </Style>
+
+    <!-- Karten -->
+    <Style x:Key="WrCard" TargetType="Border">
+        <Setter Property="BackgroundColor" Value="{StaticResource WrSurface}" />
+        <Setter Property="StrokeThickness" Value="0" />
+        <Setter Property="Padding" Value="18" />
+        <Setter Property="StrokeShape">
+            <RoundRectangle CornerRadius="20" />
+        </Setter>
+    </Style>
+
+    <Style x:Key="WrIconCircle" TargetType="Border">
+        <Setter Property="StrokeThickness" Value="0" />
+        <Setter Property="WidthRequest" Value="52" />
+        <Setter Property="HeightRequest" Value="52" />
+        <Setter Property="VerticalOptions" Value="Center" />
+        <Setter Property="StrokeShape">
+            <RoundRectangle CornerRadius="26" />
+        </Setter>
+    </Style>
+
+    <!-- Texte -->
+    <Style x:Key="WrTitle" TargetType="Label">
+        <Setter Property="FontSize" Value="24" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="TextColor" Value="{StaticResource WrText}" />
+        <Setter Property="VerticalOptions" Value="Center" />
+    </Style>
+
+    <Style x:Key="WrSectionTitle" TargetType="Label">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="CharacterSpacing" Value="1" />
+        <Setter Property="TextTransform" Value="Uppercase" />
+        <Setter Property="TextColor" Value="{StaticResource WrAccent}" />
+        <Setter Property="Margin" Value="4,8,0,0" />
+    </Style>
+
+    <Style x:Key="WrBody" TargetType="Label">
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="TextColor" Value="{StaticResource WrText}" />
+        <Setter Property="VerticalOptions" Value="Center" />
+    </Style>
+
+    <Style x:Key="WrCaption" TargetType="Label">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="TextColor" Value="{StaticResource WrTextMuted}" />
+    </Style>
+
+    <Style x:Key="WrIcon" TargetType="Label">
+        <Setter Property="FontFamily" Value="Icons" />
+        <Setter Property="FontSize" Value="26" />
+        <Setter Property="TextColor" Value="{StaticResource WrText}" />
+        <Setter Property="HorizontalTextAlignment" Value="Center" />
+        <Setter Property="VerticalTextAlignment" Value="Center" />
+        <Setter Property="HorizontalOptions" Value="Center" />
+        <Setter Property="VerticalOptions" Value="Center" />
+    </Style>
+
+    <!-- Buttons -->
+    <Style x:Key="WrIconButton" TargetType="Button">
+        <Setter Property="FontFamily" Value="Icons" />
+        <Setter Property="FontSize" Value="24" />
+        <Setter Property="TextColor" Value="{StaticResource WrText}" />
+        <Setter Property="BackgroundColor" Value="{StaticResource WrSurfaceHigh}" />
+        <Setter Property="CornerRadius" Value="22" />
+        <Setter Property="WidthRequest" Value="44" />
+        <Setter Property="HeightRequest" Value="44" />
+        <Setter Property="MinimumWidthRequest" Value="44" />
+        <Setter Property="MinimumHeightRequest" Value="44" />
+        <Setter Property="Padding" Value="0" />
+    </Style>
+
+    <Style x:Key="WrPrimaryButton" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="{StaticResource WrAccent}" />
+        <Setter Property="TextColor" Value="{StaticResource WrOnAccent}" />
+        <Setter Property="FontSize" Value="17" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="CornerRadius" Value="16" />
+        <Setter Property="HeightRequest" Value="56" />
+    </Style>
+
+    <Style x:Key="WrSecondaryButton" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="{StaticResource WrSurfaceHigh}" />
+        <Setter Property="TextColor" Value="{StaticResource WrText}" />
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="CornerRadius" Value="16" />
+        <Setter Property="HeightRequest" Value="52" />
+    </Style>
+
+    <Style x:Key="WrDangerButton" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="{StaticResource WrDanger}" />
+        <Setter Property="TextColor" Value="White" />
+        <Setter Property="FontSize" Value="17" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="CornerRadius" Value="16" />
+        <Setter Property="HeightRequest" Value="56" />
+    </Style>
+
+    <!-- Eingaben -->
+    <Style x:Key="WrEntry" TargetType="Entry">
+        <Setter Property="TextColor" Value="{StaticResource WrText}" />
+        <Setter Property="PlaceholderColor" Value="{StaticResource WrTextMuted}" />
+        <Setter Property="BackgroundColor" Value="{StaticResource WrSurfaceHigh}" />
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="HeightRequest" Value="50" />
+    </Style>
+
+    <Style x:Key="WrPicker" TargetType="Picker">
+        <Setter Property="TextColor" Value="{StaticResource WrText}" />
+        <Setter Property="TitleColor" Value="{StaticResource WrTextMuted}" />
+        <Setter Property="BackgroundColor" Value="{StaticResource WrSurfaceHigh}" />
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="HeightRequest" Value="50" />
+    </Style>
+</ResourceDictionary>
