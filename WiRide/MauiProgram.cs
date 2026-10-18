@@ -39,15 +39,19 @@ namespace WiRide
 #if ANDROID
             builder.Services.AddSingleton<IAudioService, AndroidAudioService>();
             builder.Services.AddSingleton<IWiFiService, AndroidWiFiService>();
+            builder.Services.AddSingleton<IPiperSynthesizer, AndroidPiperSynthesizer>();
+            builder.Services.AddSingleton<IMusicCapture, AndroidMusicCapture>();
 #else
             // Platzhalter-Services fuer andere Plattformen
             builder.Services.AddSingleton<IAudioService, MockAudioService>();
             builder.Services.AddSingleton<IWiFiService, MockWiFiService>();
+            builder.Services.AddSingleton<IMusicCapture, NoMusicCapture>();
 #endif
 
             builder.Services.AddSingleton<INetworkService, UdpNetworkService>();
             builder.Services.AddSingleton<AudioMixerService>();
             builder.Services.AddSingleton<AudioCodecService>();
+            builder.Services.AddSingleton<AnnouncementService>();
             builder.Services.AddSingleton<IntercomService>();
 
 #if DEBUG
@@ -67,6 +71,7 @@ namespace WiRide
         public bool IsRecording => false;
         public bool IsPlaying => false;
         public int MaxQueuedChunks { get; set; }
+        public void SetDuckOthers(bool duck) { }
         public Task StartRecordingAsync() => Task.CompletedTask;
         public Task StopRecordingAsync() => Task.CompletedTask;
         public Task StartPlaybackAsync() => Task.CompletedTask;

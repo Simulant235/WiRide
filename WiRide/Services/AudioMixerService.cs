@@ -7,6 +7,15 @@ public class AudioMixerService
 {
     private const double TargetRms = 3000;   // Ziel-Lautstaerke fuer die Normalisierung
     private const double SilenceRms = 300;   // darunter ist es Stille/Rauschen -> Verstaerkung nicht anpassen
+    private const double SpeechRms = 600;    // ab hier spricht jemand -> Musik wird abgesenkt
+    private const double MusicDuckGain = 0.2;
+
+    public const string MusicSuffix = ":music";
+    public static string MusicId(string sourceId) => sourceId + MusicSuffix;
+    private static bool IsMusic(string sourceId) => sourceId.EndsWith(MusicSuffix, StringComparison.Ordinal);
+
+    private double _musicGain = 1.0;
+    private int _speechHold;
 
     private readonly Dictionary<string, Queue<short[]>> _buffers = new();
     private readonly Dictionary<string, double> _sourceGain = new();
@@ -47,12 +56,19 @@ public class AudioMixerService
 
                 var samples = queue.Dequeue();
                 frame.Parts[sourceId] = samples;
-                frame.NormalizeGain[sourceId] = UpdateGain(sourceId, samples);
+                frame.NormalizeGain[sourceId] = IsMusic(sourceId) ? 1.0 : UpdateGain(sourceId, samples);
 
                 int length = Math.Min(samples.Length, frameSamples);
                 for (int i = 0; i < length; i++)
                     frame.Sum[i] += samples[i];
             }
+
+            // Musik absenken, solange jemand spricht (bei allen Zuhoerern)
+            bool speech = frame.Parts.Any(p => !IsMusic(p.Key) && AudioProcessor.Rms(p.Value) > SpeechRms);
+            _speechHold = speech ? 25 : Math.Max(0, _speechHold - 1); // 500 ms nachhalten
+            double target = _speechHold > 0 ? MusicDuckGain : 1.0;
+            _musicGain = _musicGain * 0.7 + target * 0.3;
+            frame.MusicGain = _musicGain;
 
             return frame.Parts.Count > 0 ? frame : null;
         }
@@ -79,12 +95,15 @@ public class AudioMixerService
     public static byte[]? MixMinus(MixFrame frame, string excludeId, double normalizeStrength = 0)
     {
         frame.Parts.TryGetValue(excludeId, out var own);
-        if (frame.Parts.Count - (own != null ? 1 : 0) == 0)
+        string ownMusic = MusicId(excludeId);
+        bool hasMusic = frame.Parts.Keys.Any(IsMusic);
+
+        if (!frame.Parts.Keys.Any(k => k != excludeId && k != ownMusic))
             return null;
 
         var result = new short[frame.Sum.Length];
 
-        if (normalizeStrength <= 0)
+        if (normalizeStrength <= 0 && !hasMusic)
         {
             // Schneller Weg: Summe minus eigene Stimme
             for (int i = 0; i < result.Length; i++)
@@ -100,10 +119,12 @@ public class AudioMixerService
             var mix = new double[result.Length];
             foreach (var (sourceId, samples) in frame.Parts)
             {
-                if (sourceId == excludeId)
+                if (sourceId == excludeId || sourceId == ownMusic)
                     continue;
 
-                double gain = Math.Pow(frame.NormalizeGain[sourceId], normalizeStrength);
+                double gain = IsMusic(sourceId)
+                    ? frame.MusicGain
+                    : Math.Pow(frame.NormalizeGain[sourceId], normalizeStrength);
                 int length = Math.Min(samples.Length, mix.Length);
                 for (int i = 0; i < length; i++)
                     mix[i] += samples[i] * gain;
@@ -121,6 +142,7 @@ public class AudioMixerService
         lock (_lock)
         {
             _buffers.Remove(sourceId);
+            _buffers.Remove(MusicId(sourceId));
             _sourceGain.Remove(sourceId);
         }
     }
@@ -142,4 +164,5 @@ public sealed class MixFrame
     public int[] Sum { get; }
     public Dictionary<string, short[]> Parts { get; } = new();
     public Dictionary<string, double> NormalizeGain { get; } = new();
+    public double MusicGain { get; set; } = 1.0;
 }

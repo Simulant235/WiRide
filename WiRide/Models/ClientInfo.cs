@@ -22,6 +22,8 @@ public class ClientInfo
     public string LatencyText => LatencyMs > 0 ? $"{LatencyMs} ms" : WiRide.Services.Loc.T("RiderConnected");
 }
 
+public record GroupEvent(GroupEventCode Code, string RiderName, string SenderId);
+
 public class DiscoveredHost
 {
     public string Name { get; set; } = string.Empty;

@@ -11,13 +11,16 @@ namespace WiRide.Platforms.Android.Services;
 
 // Haelt Mikrofon, CPU und WLAN aktiv, solange eine Intercom-Sitzung laeuft
 // (z.B. bei gesperrtem Bildschirm waehrend der Fahrt).
-[Service(Exported = false, ForegroundServiceType = ForegroundService.TypeMicrophone)]
+[Service(Exported = false, ForegroundServiceType = ForegroundService.TypeMicrophone | ForegroundService.TypeMediaProjection)]
 public class IntercomForegroundService : Service
 {
     private const int NotificationId = 1001;
     private const string ChannelId = "wiride_intercom";
     private const string ExtraText = "text";
     private const string ActionStop = "com.wiride.STOP";
+
+    private static IntercomForegroundService? _instance;
+    private Notification? _notification;
 
     private PowerManager.WakeLock? _wakeLock;
     private WifiManager.WifiLock? _wifiLock;
@@ -41,6 +44,24 @@ public class IntercomForegroundService : Service
     }
 
     public override IBinder? OnBind(Intent? intent) => null;
+
+    public override void OnCreate()
+    {
+        base.OnCreate();
+        _instance = this;
+    }
+
+    // Fuer "Musik teilen": Service zusaetzlich als mediaProjection kennzeichnen
+    public static bool EnableMediaProjection()
+    {
+        if (_instance?._notification == null)
+            return false;
+
+        if (Build.VERSION.SdkInt >= BuildVersionCodes.Q)
+            _instance.StartForeground(NotificationId, _instance._notification,
+                ForegroundService.TypeMicrophone | ForegroundService.TypeMediaProjection);
+        return true;
+    }
 
     public override StartCommandResult OnStartCommand(Intent? intent, StartCommandFlags flags, int startId)
     {
@@ -70,6 +91,8 @@ public class IntercomForegroundService : Service
             .SetContentIntent(pendingIntent)!
             .AddAction(0, Loc.T("End"), stopPending)!
             .Build()!;
+
+        _notification = notification;
 
         if (Build.VERSION.SdkInt >= BuildVersionCodes.Q)
             StartForeground(NotificationId, notification, ForegroundService.TypeMicrophone);
@@ -112,6 +135,8 @@ public class IntercomForegroundService : Service
 
     public override void OnDestroy()
     {
+        _instance = null;
+
         if (_wakeLock?.IsHeld == true)
             _wakeLock.Release();
         if (_wifiLock?.IsHeld == true)

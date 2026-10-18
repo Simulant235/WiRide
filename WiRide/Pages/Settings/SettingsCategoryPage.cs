@@ -182,6 +182,9 @@ public class SettingsCategoryPage : ContentPage
 
         save();
 
+        if (item.AfterChange != null)
+            Dispatcher.Dispatch(async () => await item.AfterChange(this));
+
         if (item.ReloadsUi)
             Dispatcher.Dispatch(async () => await ThemeManager.ReloadUiAsync(reopenSettings: true));
     }

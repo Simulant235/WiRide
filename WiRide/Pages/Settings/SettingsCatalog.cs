@@ -15,6 +15,7 @@ public static class SettingsCatalog
         new("CatProfile", "CatProfileDesc", Icons.Person, Profile),
         new("CatAudio", "CatAudioDesc", Icons.Headset, Audio_),
         new("CatVoice", "CatVoiceDesc", Icons.Mic, Voice),
+        new("CatAnnouncements", "CatAnnouncementsDesc", Icons.Volume, Announcements),
         new("CatAppearance", "CatAppearanceDesc", Icons.Tune, Appearance),
         new("CatHotspot", "CatHotspotDesc", Icons.WifiTethering, Hotspot),
         new("CatConnection", "CatConnectionDesc", Icons.Wifi, Connection),
@@ -115,6 +116,107 @@ public static class SettingsCatalog
             SetEnabled = v => AppSettings.VoiceActivationEnabled = v,
             GetValue = () => AppSettings.VoiceActivationSensitivity,
             SetValue = v => AppSettings.VoiceActivationSensitivity = v
+        };
+    }
+
+    private static AnnouncementService Announcer => ServiceHelper.Get<AnnouncementService>();
+
+    private static IEnumerable<SettingItem> Announcements()
+    {
+        yield return new ToggleSliderSetting
+        {
+            TitleKey = "SetAnnouncements",
+            DescriptionKey = "SetAnnouncementsDesc",
+            Icon = Icons.Volume,
+            SliderLabelKey = "SetVolume",
+            GetEnabled = () => AppSettings.AnnouncementsEnabled,
+            SetEnabled = v => AppSettings.AnnouncementsEnabled = v,
+            GetValue = () => AppSettings.AnnouncementVolume,
+            SetValue = v => AppSettings.AnnouncementVolume = v
+        };
+        yield return new ToggleSetting
+        {
+            TitleKey = "SetAnnounceRiders",
+            DescriptionKey = "SetAnnounceRidersDesc",
+            Icon = Icons.Group,
+            Get = () => AppSettings.AnnounceRiders,
+            Set = v => AppSettings.AnnounceRiders = v
+        };
+        yield return new ToggleSetting
+        {
+            TitleKey = "SetAnnounceConnection",
+            DescriptionKey = "SetAnnounceConnectionDesc",
+            Icon = Icons.Wifi,
+            Get = () => AppSettings.AnnounceConnection,
+            Set = v => AppSettings.AnnounceConnection = v
+        };
+        yield return new ChoiceSetting
+        {
+            TitleKey = "SetVoice",
+            DescriptionKey = "SetVoiceDesc",
+            Icon = Icons.Headset,
+            Experimental = true,
+            Options = () => new[] { Loc.T("VoiceSystem"), Loc.T("VoiceAiOption") },
+            Get = () => (int)AppSettings.VoiceEngine,
+            Set = i => AppSettings.VoiceEngine = (VoiceEngine)i,
+            AfterChange = page => AppSettings.VoiceEngine == VoiceEngine.Piper ? VoiceDownloadPage.CheckAsync(page, force: true) : Task.CompletedTask
+        };
+        yield return new ActionSetting
+        {
+            TitleKey = "SetVoiceTest",
+            Icon = Icons.Volume,
+            Run = _ => { Announcer.Test(); return Task.CompletedTask; }
+        };
+        yield return new ActionSetting
+        {
+            TitleKey = "SetVoiceDownload",
+            Icon = Icons.Headset,
+            Experimental = true,
+            Run = page => VoiceDownloadPage.CheckAsync(page, force: true)
+        };
+        yield return new ActionSetting
+        {
+            TitleKey = "SetVoiceDelete",
+            Icon = Icons.Reset,
+            Danger = true,
+            Run = async page =>
+            {
+                long size = PiperVoiceManager.InstalledSizeMb();
+                PiperVoiceManager.DeleteAll();
+                await page.DisplayAlertAsync(Loc.T("VoiceAi"), $"{Loc.T("VoiceDeleted")} ({size} MB)", Loc.T("Ok"));
+            }
+        };
+        yield return new ActionSetting
+        {
+            TitleKey = "SetAndroidTts",
+            DescriptionKey = "SetAndroidTtsDesc",
+            Icon = Icons.Settings,
+            Run = _ => OpenAndroidSettings("com.android.settings.TTS_SETTINGS")
+        };
+        yield return new ToggleSetting
+        {
+            TitleKey = "SetDucking",
+            DescriptionKey = "SetDuckingDesc",
+            Icon = Icons.Volume,
+            Get = () => AppSettings.DuckingEnabled,
+            Set = v => AppSettings.DuckingEnabled = v
+        };
+        yield return new ToggleSetting
+        {
+            TitleKey = "SetQuickMessages",
+            DescriptionKey = "SetQuickMessagesDesc",
+            Icon = Icons.Group,
+            Get = () => AppSettings.QuickMessagesEnabled,
+            Set = v => AppSettings.QuickMessagesEnabled = v
+        };
+        yield return new ToggleSetting
+        {
+            TitleKey = "SetMusicSharing",
+            DescriptionKey = "SetMusicSharingDesc",
+            Icon = Icons.Headset,
+            Experimental = true,
+            Get = () => AppSettings.MusicSharingEnabled,
+            Set = v => AppSettings.MusicSharingEnabled = v
         };
     }
 

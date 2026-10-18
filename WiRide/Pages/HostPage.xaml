@@ -88,6 +88,7 @@
                         </BindableLayout.ItemTemplate>
                     </VerticalStackLayout>
                 </VerticalStackLayout>
+                <ContentView x:Name="QuickHost" IsVisible="False" />
             </VerticalStackLayout>
         </ScrollView>
 

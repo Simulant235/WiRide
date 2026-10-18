@@ -92,6 +92,12 @@ public static class ThemeManager
         window.Page = shell;
 
         if (reopenSettings)
-            await shell.Navigation.PushAsync(new Pages.SettingsPage(), false);
+        {
+            var settings = new Pages.SettingsPage();
+            await shell.Navigation.PushAsync(settings, false);
+
+            // Neue Sprache + KI-Stimme gewaehlt -> Download der passenden Stimme anbieten
+            await Pages.VoiceDownloadPage.CheckAsync(settings);
+        }
     }
 }

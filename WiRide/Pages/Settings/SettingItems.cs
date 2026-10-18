@@ -10,6 +10,9 @@ public abstract class SettingItem
 
     // true = Oberflaeche wird danach neu aufgebaut (Sprache, Design, Schrift)
     public bool ReloadsUi { get; init; }
+
+    // Wird nach dem Speichern aufgerufen (z.B. Rueckfrage zum Download)
+    public Func<Page, Task>? AfterChange { get; init; }
 }
 
 public sealed class ToggleSetting : SettingItem
